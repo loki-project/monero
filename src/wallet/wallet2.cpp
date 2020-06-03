@@ -1304,7 +1304,7 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
     crypto::secret_key key;
     crypto::cn_slow_hash(passphrase.data(), passphrase.size(), (crypto::hash&)key, crypto::cn_slow_hash_type::heavy_v1);
     sc_reduce32((unsigned char*)key.data);
-    data = encrypt(data, key, true);
+    data = encrypt(lokimq::string_view(data.data(), data.size()), key, true);
   }
 
   if (raw)
@@ -8498,9 +8498,14 @@ struct lns_prepared_args
   lns::generic_owner      backup_owner;
   lns::generic_signature  signature;
   crypto::hash            prev_txid;
+  std::string             name_cipher;
 };
 
-static bool try_generate_lns_signature(wallet2 const &wallet, std::string const &curr_owner, std::string const *new_owner, std::string const *new_backup_owner, lns_prepared_args &result)
+static bool try_generate_lns_signature(wallet2 const &wallet,
+                                       std::string const &curr_owner,
+                                       std::string const *new_owner,
+                                       std::string const *new_backup_owner,
+                                       lns_prepared_args &result)
 {
   cryptonote::address_parse_info curr_owner_parsed = {};
   if (!cryptonote::get_account_address_from_str(curr_owner_parsed, wallet.nettype(), curr_owner))
@@ -8530,17 +8535,19 @@ static bool try_generate_lns_signature(wallet2 const &wallet, std::string const 
   return true;
 }
 
-static lns_prepared_args prepare_tx_extra_loki_name_system_values(wallet2 const &wallet,
-                                                                  lns::mapping_type type,
-                                                                  uint32_t priority,
-                                                                  std::string &name,
-                                                                  std::string const *value,
-                                                                  std::string const *owner,
-                                                                  std::string const *backup_owner,
-                                                                  bool make_signature,
-                                                                  uint32_t account_index,
-                                                                  std::string *reason,
-                                                                  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response)
+static lns_prepared_args prepare_tx_extra_loki_name_system_values(
+    bool is_buying,
+    wallet2 const &wallet,
+    lns::mapping_type type,
+    uint32_t priority,
+    std::string &name,
+    std::string const *value,
+    std::string const *owner,
+    std::string const *backup_owner,
+    bool make_signature,
+    uint32_t account_index,
+    std::string *reason,
+    std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response)
 {
   lns_prepared_args result = {};
   if (priority == tools::tx_priority_blink)
@@ -8549,11 +8556,15 @@ static lns_prepared_args prepare_tx_extra_loki_name_system_values(wallet2 const 
     return result;
   }
 
-  name = tools::lowercase_ascii_string(name);
-  if (!lns::validate_lns_name(type, name, reason))
-    return result;
+  // NOTE: Handle Name
+  {
+    name = tools::lowercase_ascii_string(name);
+    if (!lns::validate_lns_name(type, name, reason))
+      return result;
+    result.name_hash = lns::name_to_hash(name);
+  }
 
-  result.name_hash = lns::name_to_hash(name);
+  // NOTE: Handle Value
   if (value)
   {
     lns::mapping_value binary_value = {};
@@ -8567,12 +8578,37 @@ static lns_prepared_args prepare_tx_extra_loki_name_system_values(wallet2 const 
     }
   }
 
-  if (owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *owner, result.owner, reason))
-      return {};
+  // NOTE: Handle owner, default the owner if buying but owner is not specified
+  {
+    if (owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *owner, result.owner, reason))
+        return {};
 
-  if (backup_owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *backup_owner, result.backup_owner, reason))
-      return {};
+    if (backup_owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *backup_owner, result.backup_owner, reason))
+        return {};
 
+    if (is_buying && !owner)
+    {
+      // NOTE: Default the owner
+      result.owner = lns::make_monero_owner(wallet.get_subaddress({account_index, 0}), account_index != 0);
+    }
+  }
+
+  // NOTE: Generate Name Cipher
+  if (result.owner.type == lns::generic_owner_sig_type::monero)
+  {
+    crypto::secret_key encryption_key;
+    wallet.get_account().get_device().open_tx(encryption_key);
+    result.name_cipher = lns::name_to_cipher_using_wallet(encryption_key, result.owner.wallet.address, name, reason);
+  }
+  else
+  {
+    result.name_cipher = lns::name_to_cipher_using_ed25519(result.owner.ed25519, name, reason);
+  }
+
+  if (result.name_cipher.empty())
+    return {};
+
+  // NOTE: Query previous txid relating to name and generate signature if requested
   {
     cryptonote::rpc::LNS_NAMES_TO_OWNERS::request request = {};
     {
@@ -8584,9 +8620,11 @@ static lns_prepared_args prepare_tx_extra_loki_name_system_values(wallet2 const 
 
     boost::optional<std::string> failed;
     std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response_;
-    if (!response) {
+    if (!response)
+    {
       response = &response_;
     }
+
     *response = wallet.lns_names_to_owners(request, failed);
     if (failed)
     {
@@ -8645,22 +8683,9 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping
                                                                     std::set<uint32_t> subaddr_indices)
 {
   std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
-  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(*this, type, priority, name, &value, owner, backup_owner, false /*make_signature*/, account_index, reason, &response);
-  if (!owner)
-    prepared_args.owner = lns::make_monero_owner(get_subaddress({account_index, 0}), account_index != 0);
-
+  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(true /*is_buying*/, *this, type, priority, name, &value, owner, backup_owner, false /*make_signature*/, account_index, reason, &response);
   if (!prepared_args)
     return {};
-
-  std::vector<uint8_t> extra;
-  auto entry = cryptonote::tx_extra_loki_name_system::make_buy(
-      prepared_args.owner,
-      backup_owner ? &prepared_args.backup_owner : nullptr,
-      type,
-      prepared_args.name_hash,
-      prepared_args.encrypted_value.to_string(),
-      prepared_args.prev_txid);
-  add_loki_name_system_to_tx_extra(extra, entry);
 
   boost::optional<uint8_t> hf_version = get_hard_fork_version();
   if (!hf_version)
@@ -8668,6 +8693,17 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping
     if (reason) *reason = ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
     return {};
   }
+
+  std::vector<uint8_t> extra;
+  auto entry = cryptonote::tx_extra_loki_name_system::make_buy(*hf_version,
+                                                               prepared_args.owner,
+                                                               backup_owner ? &prepared_args.backup_owner : nullptr,
+                                                               type,
+                                                               prepared_args.name_hash,
+                                                               prepared_args.name_cipher,
+                                                               prepared_args.encrypted_value.to_string(),
+                                                               prepared_args.prev_txid);
+  add_loki_name_system_to_tx_extra(extra, entry);
 
   loki_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::loki_name_system, priority, type);
   auto result = create_transactions_2({} /*dests*/,
@@ -8718,7 +8754,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_update_mapping_tx(lns::mapp
   }
 
   bool make_signature = signature == nullptr;
-  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(*this, type, priority, name, value, owner, backup_owner, make_signature, account_index, reason, response);
+  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(false /*is_buying*/, *this, type, priority, name, value, owner, backup_owner, make_signature, account_index, reason, response);
   if (!prepared_args) return {};
 
   if (!make_signature)
@@ -8730,21 +8766,24 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_update_mapping_tx(lns::mapp
     }
   }
 
-  std::vector<uint8_t> extra;
-  auto entry = cryptonote::tx_extra_loki_name_system::make_update(prepared_args.signature,
-                                                                  type,
-                                                                  prepared_args.name_hash,
-                                                                  prepared_args.encrypted_value.to_span(),
-                                                                  owner ? &prepared_args.owner : nullptr,
-                                                                  backup_owner ? &prepared_args.backup_owner : nullptr,
-                                                                  prepared_args.prev_txid);
-  add_loki_name_system_to_tx_extra(extra, entry);
   boost::optional<uint8_t> hf_version = get_hard_fork_version();
   if (!hf_version)
   {
     if (reason) *reason = ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
     return {};
   }
+
+  std::vector<uint8_t> extra;
+  auto entry = cryptonote::tx_extra_loki_name_system::make_update(*hf_version,
+                                                                  prepared_args.signature,
+                                                                  type,
+                                                                  prepared_args.name_hash,
+                                                                  prepared_args.encrypted_value.to_span(),
+                                                                  owner ? &prepared_args.owner : nullptr,
+                                                                  owner ? &prepared_args.name_cipher : nullptr,
+                                                                  backup_owner ? &prepared_args.backup_owner : nullptr,
+                                                                  prepared_args.prev_txid);
+  add_loki_name_system_to_tx_extra(extra, entry);
   loki_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::loki_name_system, priority, lns::mapping_type::update_record_internal);
 
   auto result = create_transactions_2({} /*dests*/,
@@ -8810,7 +8849,7 @@ bool wallet2::lns_make_update_mapping_signature(lns::mapping_type type,
                                                 std::string *reason)
 {
   std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
-  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(*this, type, tx_priority_unimportant, name, value, owner, backup_owner, true /*make_signature*/, account_index, reason, &response);
+  lns_prepared_args prepared_args = prepare_tx_extra_loki_name_system_values(false /*is_buying*/, *this, type, tx_priority_unimportant, name, value, owner, backup_owner, true /*make_signature*/, account_index, reason, &response);
   if (!prepared_args) return false;
 
   if (prepared_args.prev_txid == crypto::null_hash)
@@ -14058,49 +14097,18 @@ size_t wallet2::import_multisig(std::vector<cryptonote::blobdata> blobs)
   return n_outputs;
 }
 //----------------------------------------------------------------------------------------------------
-std::string wallet2::encrypt(const char *plaintext, size_t len, const crypto::secret_key &skey, bool authenticated) const
+std::string wallet2::encrypt(lokimq::string_view plaintext, const crypto::secret_key &skey, bool authenticated) const
 {
-  crypto::chacha_key key;
-  crypto::generate_chacha_key(&skey, sizeof(skey), key, m_kdf_rounds);
-  std::string ciphertext;
-  crypto::chacha_iv iv = crypto::rand<crypto::chacha_iv>();
-  ciphertext.resize(len + sizeof(iv) + (authenticated ? sizeof(crypto::signature) : 0));
-  crypto::chacha20(plaintext, len, key, iv, &ciphertext[sizeof(iv)]);
-  memcpy(&ciphertext[0], &iv, sizeof(iv));
-  if (authenticated)
-  {
-    crypto::hash hash;
-    crypto::cn_fast_hash(ciphertext.data(), ciphertext.size() - sizeof(signature), hash);
-    crypto::public_key pkey;
-    crypto::secret_key_to_public_key(skey, pkey);
-    crypto::signature &signature = *(crypto::signature*)&ciphertext[ciphertext.size() - sizeof(crypto::signature)];
-    crypto::generate_signature(hash, pkey, skey, signature);
-  }
-  return ciphertext;
+  return crypto::encrypt(plaintext.data(), plaintext.size(), skey, authenticated, m_kdf_rounds);
 }
 //----------------------------------------------------------------------------------------------------
-std::string wallet2::encrypt(const epee::span<char> &plaintext, const crypto::secret_key &skey, bool authenticated) const
+std::string wallet2::encrypt_with_view_secret_key(lokimq::string_view plaintext, bool authenticated) const
 {
-  return encrypt(plaintext.data(), plaintext.size(), skey, authenticated);
-}
-//----------------------------------------------------------------------------------------------------
-std::string wallet2::encrypt(const std::string &plaintext, const crypto::secret_key &skey, bool authenticated) const
-{
-  return encrypt(plaintext.data(), plaintext.size(), skey, authenticated);
-}
-//----------------------------------------------------------------------------------------------------
-std::string wallet2::encrypt(const epee::wipeable_string &plaintext, const crypto::secret_key &skey, bool authenticated) const
-{
-  return encrypt(plaintext.data(), plaintext.size(), skey, authenticated);
-}
-//----------------------------------------------------------------------------------------------------
-std::string wallet2::encrypt_with_view_secret_key(const std::string &plaintext, bool authenticated) const
-{
-  return encrypt(plaintext, get_account().get_keys().m_view_secret_key, authenticated);
+  return crypto::encrypt(plaintext.data(), plaintext.size(), get_account().get_keys().m_view_secret_key, authenticated, m_kdf_rounds);
 }
 //----------------------------------------------------------------------------------------------------
 template<typename T>
-T wallet2::decrypt(const std::string &ciphertext, const crypto::secret_key &skey, bool authenticated) const
+T wallet2::decrypt(lokimq::string_view ciphertext, const crypto::secret_key &skey, bool authenticated) const
 {
   const size_t prefix_size = sizeof(chacha_iv) + (authenticated ? sizeof(crypto::signature) : 0);
   THROW_WALLET_EXCEPTION_IF(ciphertext.size() < prefix_size,
@@ -14125,9 +14133,9 @@ T wallet2::decrypt(const std::string &ciphertext, const crypto::secret_key &skey
   return T(buffer.get(), ciphertext.size() - prefix_size);
 }
 //----------------------------------------------------------------------------------------------------
-template epee::wipeable_string wallet2::decrypt(const std::string &ciphertext, const crypto::secret_key &skey, bool authenticated) const;
+template epee::wipeable_string wallet2::decrypt(lokimq::string_view ciphertext, const crypto::secret_key &skey, bool authenticated) const;
 //----------------------------------------------------------------------------------------------------
-std::string wallet2::decrypt_with_view_secret_key(const std::string &ciphertext, bool authenticated) const
+std::string wallet2::decrypt_with_view_secret_key(lokimq::string_view ciphertext, bool authenticated) const
 {
   return decrypt(ciphertext, get_account().get_keys().m_view_secret_key, authenticated);
 }
