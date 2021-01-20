@@ -32,6 +32,7 @@
 #include "gtest/gtest.h"
 
 #include "common/dns_utils.h"
+#include "common/net_utils.h"
 
 TEST(DNSResolver, IPv4Success)
 {
@@ -182,3 +183,37 @@ TEST(DNS_PUBLIC, invalid_ip_num5) { EXPECT_TRUE(tools::dns_utils::parse_dns_publ
 TEST(DNS_PUBLIC, invalid_ip_4_missing) { EXPECT_TRUE(tools::dns_utils::parse_dns_public("tcp://3.4..7").empty()); }
 TEST(DNS_PUBLIC, valid_ip_lo) { EXPECT_EQ(testval("127.0.0.1"), tools::dns_utils::parse_dns_public("tcp://127.0.0.1")); }
 TEST(DNS_PUBLIC, valid_ip) { EXPECT_EQ(testval("3.4.5.6"), tools::dns_utils::parse_dns_public("tcp://3.4.5.6")); }
+
+TEST(DNS_PUBLIC, TestIPv4Netmask)
+{
+  ASSERT_TRUE(tools::net_utils::netmask_ipv4_bits(8) == uint32_t{0xFF000000});
+  ASSERT_TRUE(tools::net_utils::netmask_ipv4_bits(24) == uint32_t{0xFFFFFF00});
+}
+
+TEST(DNS_PUBLIC, TestBogon_10_8)
+{
+  ASSERT_FALSE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(10, 40, 11, 6)));
+}
+
+TEST(DNS_PUBLIC, TestBogon_192_168_16)
+{
+  ASSERT_FALSE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(192, 168, 1, 111)));
+}
+
+TEST(DNS_PUBLIC, TestBogon_127_8)
+{
+  ASSERT_FALSE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(127, 0, 0, 1)));
+}
+
+TEST(DNS_PUBLIC, TestBogon_0_8)
+{
+  ASSERT_FALSE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(0, 0, 0, 0)));
+}
+
+TEST(DNS_PUBLIC, TestBogon_NonBogon)
+{
+  ASSERT_TRUE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(1, 1, 1, 1)));
+  ASSERT_TRUE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(8, 8, 6, 6)));
+  ASSERT_TRUE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(141, 55, 12, 99)));
+  ASSERT_TRUE(tools::net_utils::is_ip_public(tools::net_utils::ip_address(79, 12, 3, 4)));
+}
