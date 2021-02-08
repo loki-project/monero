@@ -123,7 +123,7 @@ class RPCDaemon:
 
 
 class Daemon(RPCDaemon):
-    base_args = ('--dev-allow-local-ips', '--fixed-difficulty=1', '--regtest', '--non-interactive', '--rpc-ssl=disabled', '--rpc-long-poll-connections=0')
+    base_args = ('--dev-allow-local-ips', '--fixed-difficulty=1', '--regtest', '--non-interactive')
 
     def __init__(self, *,
             oxend='oxend',
@@ -151,10 +151,7 @@ class Daemon(RPCDaemon):
                 '--log-file=oxen.log'.format(self.listen_ip, self.p2p_port),
                 '--p2p-bind-ip={}'.format(self.listen_ip),
                 '--p2p-bind-port={}'.format(self.p2p_port),
-                '--rpc-bind-ip={}'.format(self.listen_ip),
-                '--rpc-bind-port={}'.format(self.rpc_port),
-                '--zmq-rpc-bind-ip={}'.format(self.listen_ip),
-                '--zmq-rpc-bind-port={}'.format(self.zmq_port),
+                '--rpc-admin={}:{}'.format(self.listen_ip, self.rpc_port),
                 '--quorumnet-port={}'.format(self.qnet_port),
                 )
 

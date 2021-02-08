@@ -17,6 +17,7 @@ namespace cryptonote
 {
 struct checkpoint_t;
 struct block;
+struct address_parse_info;
 class transaction;
 struct account_address;
 struct tx_extra_oxen_name_system;
@@ -26,8 +27,9 @@ class Blockchain;
 namespace lns
 {
 
-constexpr size_t WALLET_NAME_MAX                  = 97; // mainnet addresses are 95 but testnet/devnet are 97
-constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH     = 2 * sizeof(crypto::public_key);
+constexpr size_t WALLET_NAME_MAX                  = 64;
+constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID     = 73;  // Wallet will encrypt an identifier (1 byte) a public spend and view key (2x 32 bytes) = 65 bytes plus an additional item for payment id (8 bytes) if necessary. The identifier 0 -> No Subaddress or Payment ID, 1 -> Has Subaddress, 2-> Has Payment ID
+constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID     = 65;
 constexpr size_t LOKINET_DOMAIN_NAME_MAX          = 63 + 5; // DNS components name must be at most 63 (+ 5 for .loki); this limit applies if there is at least one hyphen (and thus includes punycode)
 constexpr size_t LOKINET_DOMAIN_NAME_MAX_NOHYPHEN = 32 + 5; // If the name does not contain a - then we restrict it to 32 characters so that it cannot be (and is obviously not) an encoded .loki address (52 characters)
 constexpr size_t LOKINET_ADDRESS_BINARY_LENGTH    = sizeof(crypto::ed25519_public_key);
@@ -42,7 +44,7 @@ constexpr size_t SODIUM_ENCRYPTION_EXTRA_BYTES = 40; // crypto_aead_xchacha20pol
 
 struct mapping_value
 {
-  static size_t constexpr BUFFER_SIZE = std::max({WALLET_ACCOUNT_BINARY_LENGTH, LOKINET_ADDRESS_BINARY_LENGTH, SESSION_PUBLIC_KEY_BINARY_LENGTH}) + SODIUM_ENCRYPTION_EXTRA_BYTES;
+  static size_t constexpr BUFFER_SIZE = std::max({WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID, LOKINET_ADDRESS_BINARY_LENGTH, SESSION_PUBLIC_KEY_BINARY_LENGTH}) + SODIUM_ENCRYPTION_EXTRA_BYTES;
   std::array<uint8_t, BUFFER_SIZE> buffer;
   bool encrypted;
   size_t len;
@@ -122,8 +124,9 @@ inline std::string_view mapping_type_str(mapping_type type)
 inline std::ostream &operator<<(std::ostream &os, mapping_type type) { return os << mapping_type_str(type); }
 
 constexpr bool mapping_type_allowed(uint8_t hf_version, mapping_type type) {
-  return (type == mapping_type::session && hf_version >= cryptonote::network_version_15_lns)
-      || (is_lokinet_type(type) && hf_version >= cryptonote::network_version_16_pulse);
+  return (type == mapping_type::session && hf_version >= cryptonote::network_version_15_ons)
+      || (is_lokinet_type(type) && hf_version >= cryptonote::network_version_16_pulse)
+      || (type == mapping_type::wallet && hf_version >= cryptonote::network_version_17);
 }
 
 // Returns all mapping types supported for lookup as of the given hardfork.  (Note that this does
@@ -280,6 +283,8 @@ struct name_system_db
 
   owner_record                get_owner_by_key      (generic_owner const &owner);
   owner_record                get_owner_by_id       (int64_t owner_id);
+  // Returns a wallet address from the passed ONS name in "str"
+  bool  get_wallet_mapping    (std::string str, uint64_t blockchain_height, cryptonote::address_parse_info& addr_info);
   // The get_mapping* methods can return any mapping, or only active mappings: for only active
   // mappings, pass in the blockchain height.  If you omit it (or explicitly pass std::nullopt) then
   // you will get the latest mappingsvalues regardless of whether expired or not they are expired.

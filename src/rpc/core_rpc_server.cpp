@@ -130,7 +130,7 @@ namespace cryptonote { namespace rpc {
     template <typename RPC>
     struct reg_helper<RPC, std::enable_if_t<std::is_base_of<BINARY, RPC>::value>> {
       using Request = typename RPC::request;
-      Request load(rpc_request& request) { 
+      Request load(rpc_request& request) {
         Request req{};
         std::string_view data;
         if (auto body = request.body_view())
@@ -1121,6 +1121,7 @@ namespace cryptonote { namespace rpc {
   {
     SEND_RAW_TX::response res{};
 
+
     PERF_TIMER(on_send_raw_tx);
     if (use_bootstrap_daemon_if_necessary<SEND_RAW_TX>(req, res))
       return res;
@@ -1988,7 +1989,7 @@ namespace cryptonote { namespace rpc {
       block blk;
       bool have_block = m_core.get_block_by_height(h, blk);
       if (!have_block)
-        throw rpc_error{ERROR_INTERNAL, 
+        throw rpc_error{ERROR_INTERNAL,
           "Internal error: can't get block by height. Height = " + std::to_string(h) + "."};
       if (blk.miner_tx.vin.size() != 1 || !std::holds_alternative<txin_gen>(blk.miner_tx.vin.front()))
         throw rpc_error{ERROR_INTERNAL, "Internal error: coinbase transaction in the block has the wrong type"};
@@ -3666,6 +3667,27 @@ namespace cryptonote { namespace rpc {
       res.encrypted_value = oxenmq::to_hex(val);
       if (val.size() < mapping->to_view().size())
         res.nonce = oxenmq::to_hex(nonce);
+    }
+    return res;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  ONS_RESOLVE_ADDRESS::response core_rpc_server::invoke(ONS_RESOLVE_ADDRESS::request&& req, rpc_context context)
+  {
+    ONS_RESOLVE_ADDRESS::response res{};
+
+    uint64_t height;
+    height = (req.height) ? req.height : m_core.get_current_blockchain_height();
+
+    cryptonote::address_parse_info info;
+    cryptonote::network_type nettype = m_core.get_nettype();
+    bool success = m_core.get_account_address_from_str_or_ons(info, nettype, req.address, height);
+
+    if (success)
+    {
+      res.status = STATUS_OK;
+      res.address = get_account_address_as_str(nettype, 0, info.address);
+    } else {
+      res.status = "Failed";
     }
     return res;
   }

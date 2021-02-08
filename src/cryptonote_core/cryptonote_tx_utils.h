@@ -130,6 +130,7 @@ namespace cryptonote
   // NOTE: Block reward function that should be called after hard fork v10
   bool get_oxen_block_reward(size_t median_weight, size_t current_block_weight, uint64_t already_generated_coins, int hard_fork_version, block_reward_parts &result, const oxen_block_reward_context &oxen_context);
 
+
   struct tx_source_entry
   {
     using output_entry = std::pair<uint64_t, rct::ctkey>;

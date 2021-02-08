@@ -1080,14 +1080,19 @@ struct lns_keys_t
 
 static lns_keys_t make_lns_keys(cryptonote::account_base const &src)
 {
-  lns_keys_t result             = {};
-  result.owner                  = lns::make_monero_owner(src.get_keys().m_account_address, false /*is_subaddress*/);
-  result.session_value.len      = lns::SESSION_PUBLIC_KEY_BINARY_LENGTH;
-  result.wallet_value.len       = sizeof(src.get_keys().m_account_address);
+  ons_keys_t result             = {};
+  result.owner                  = ons::make_monero_owner(src.get_keys().m_account_address, false /*is_subaddress*/);
+  result.session_value.len      = ons::SESSION_PUBLIC_KEY_BINARY_LENGTH;
+  result.wallet_value.len       = ons::WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID;
   result.lokinet_value.len      = sizeof(result.owner.wallet.address.m_spend_public_key);
 
   memcpy(&result.session_value.buffer[0] + 1, &result.owner.wallet.address.m_spend_public_key, result.lokinet_value.len);
-  memcpy(&result.wallet_value.buffer[0], (char *)&src.get_keys().m_account_address, result.wallet_value.len);
+
+  auto iter = result.wallet_value.buffer.begin();
+  uint8_t identifier = 0;
+  iter = std::copy_n(&identifier, 1, iter);
+  iter = std::copy_n(src.get_keys().m_account_address.m_spend_public_key.data, sizeof(&src.get_keys().m_account_address.m_spend_public_key.data), iter);
+  iter = std::copy_n(src.get_keys().m_account_address.m_view_public_key.data, sizeof(&src.get_keys().m_account_address.m_view_public_key.data), iter);
 
   // NOTE: Just needs a 32 byte key. Reuse spend key
   memcpy(&result.lokinet_value.buffer[0], (char *)&result.owner.wallet.address.m_spend_public_key, result.lokinet_value.len);
@@ -1117,8 +1122,8 @@ bool oxen_name_system_expiration::generate(std::vector<test_event_entry> &events
        mapping_type     <= lns::mapping_type::lokinet_10years;
        mapping_type      = static_cast<lns::mapping_type>(static_cast<uint16_t>(mapping_type) + 1))
   {
-    std::string const name     = "mydomain.oxen";
-    if (lns::mapping_type_allowed(gen.hardfork(), mapping_type))
+    std::string const name     = "mydomain.loki";
+    if (ons::mapping_type_allowed(gen.hardfork(), mapping_type))
     {
       cryptonote::transaction tx = gen.create_and_add_oxen_name_system_tx(miner, gen.hardfork(), mapping_type, name, miner_key.lokinet_value);
       gen.create_and_add_next_block({tx});
@@ -1419,9 +1424,9 @@ bool oxen_name_system_handles_duplicate_in_lns_db::generate(std::vector<test_eve
   gen.create_and_add_next_block({transfer});
   gen.add_transfer_unlock_blocks();
 
-  lns_keys_t miner_key     = make_lns_keys(miner);
-  lns_keys_t bob_key       = make_lns_keys(bob);
-  std::string session_name = "myfriendlydisplayname.oxen";
+  ons_keys_t miner_key     = make_ons_keys(miner);
+  ons_keys_t bob_key       = make_ons_keys(bob);
+  std::string session_name = "myfriendlydisplayname.loki";
   std::string lokinet_name = session_name;
   auto custom_type         = static_cast<lns::mapping_type>(3928);
   crypto::hash session_tx_hash = {}, lokinet_tx_hash = {};
@@ -1497,8 +1502,8 @@ bool oxen_name_system_handles_duplicate_in_tx_pool::generate(std::vector<test_ev
     gen.add_transfer_unlock_blocks();
   }
 
-  lns_keys_t bob_key       = make_lns_keys(bob);
-  std::string session_name = "myfriendlydisplayname.oxen";
+  ons_keys_t bob_key       = make_ons_keys(bob);
+  std::string session_name = "myfriendlydisplayname.loki";
 
   auto custom_type = static_cast<lns::mapping_type>(3928);
   {
@@ -1664,9 +1669,9 @@ bool oxen_name_system_large_reorg::generate(std::vector<test_event_entry> &event
     gen.add_transfer_unlock_blocks();
   }
 
-  // NOTE: Generate the first round of LNS transactions belonging to miner
-  uint64_t first_lns_height                 = 0;
-  std::string const lokinet_name1           = "website.oxen";
+  // NOTE: Generate the first round of ONS transactions belonging to miner
+  uint64_t first_ons_height                 = 0;
+  std::string const lokinet_name1           = "website.loki";
   std::string const wallet_name1            = "MyWallet";
   std::string const session_name1           = "I-Like-Loki";
   crypto::hash session_tx_hash1 = {}, wallet_tx_hash1 = {}, lokinet_tx_hash1 = {};
@@ -1870,9 +1875,9 @@ bool oxen_name_system_name_renewal::generate(std::vector<test_event_entry> &even
     gen.add_mined_money_unlock_blocks();
   }
 
-  lns_keys_t miner_key = make_lns_keys(miner);
-  std::string const name    = "mydomain.oxen";
-  cryptonote::transaction tx = gen.create_and_add_oxen_name_system_tx(miner, gen.hardfork(), lns::mapping_type::lokinet, name, miner_key.lokinet_value);
+  ons_keys_t miner_key = make_ons_keys(miner);
+  std::string const name    = "mydomain.loki";
+  cryptonote::transaction tx = gen.create_and_add_oxen_name_system_tx(miner, gen.hardfork(), ons::mapping_type::lokinet, name, miner_key.lokinet_value);
   gen.create_and_add_next_block({tx});
   crypto::hash prev_txid = get_transaction_hash(tx);
 
@@ -1988,8 +1993,8 @@ bool oxen_name_system_name_value_max_lengths::generate(std::vector<test_event_en
   // Lokinet
   if (lns::mapping_type_allowed(gen.hardfork(), lns::mapping_type::lokinet))
   {
-    std::string name(lns::LOKINET_DOMAIN_NAME_MAX, 'a');
-    name.replace(name.size() - 6, 5, ".oxen");
+    std::string name(ons::LOKINET_DOMAIN_NAME_MAX, 'a');
+    name.replace(name.size() - 6, 5, ".loki");
 
     data.type            = lns::mapping_type::lokinet;
     data.name_hash       = lns::name_to_hash(name);
@@ -2021,8 +2026,8 @@ bool oxen_name_system_update_mapping_after_expiry_fails::generate(std::vector<te
   lns_keys_t miner_key = make_lns_keys(miner);
   if (lns::mapping_type_allowed(gen.hardfork(), lns::mapping_type::lokinet))
   {
-    std::string const name     = "mydomain.oxen";
-    cryptonote::transaction tx = gen.create_and_add_oxen_name_system_tx(miner, gen.hardfork(), lns::mapping_type::lokinet, name, miner_key.lokinet_value);
+    std::string const name     = "mydomain.loki";
+    cryptonote::transaction tx = gen.create_and_add_oxen_name_system_tx(miner, gen.hardfork(), ons::mapping_type::lokinet, name, miner_key.lokinet_value);
     crypto::hash tx_hash = cryptonote::get_transaction_hash(tx);
     gen.create_and_add_next_block({tx});
 
@@ -2531,8 +2536,8 @@ bool oxen_name_system_wrong_burn::generate(std::vector<test_event_entry> &events
         }
         else if (type == lns::mapping_type::lokinet)
         {
-          value = lns_keys.lokinet_value;
-          name  = "myfriendlylokinetname.oxen";
+          value = ons_keys.lokinet_value;
+          name  = "myfriendlylokinetname.loki";
         }
         else
             assert("Unhandled type enum" == nullptr);

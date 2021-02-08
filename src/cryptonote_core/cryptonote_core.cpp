@@ -55,6 +55,8 @@ extern "C" {
 #include "common/threadpool.h"
 #include "common/command_line.h"
 #include "common/hex.h"
+#include "common/base58.h"
+#include "common/dns_utils.h"
 #include "epee/warnings.h"
 #include "crypto/crypto.h"
 #include "cryptonote_config.h"
@@ -1343,6 +1345,7 @@ namespace cryptonote
       }
     }
 
+
     parse_incoming_tx_accumulated_batch(tx_info, opts.kept_by_block);
 
     return tx_info;
@@ -1670,8 +1673,8 @@ namespace cryptonote
     crypto::x25519_public_key x_pkey{0};
     constexpr std::array<uint16_t, 3> MIN_TIMESTAMP_VERSION{9,0,0};
     std::array<uint16_t,3> proofversion;
-    m_service_node_list.access_proof(pubkey, [&](auto &proof) { 
-      x_pkey = proof.pubkey_x25519; 
+    m_service_node_list.access_proof(pubkey, [&](auto &proof) {
+      x_pkey = proof.pubkey_x25519;
       proofversion = proof.proof->version;
     });
 
@@ -1682,7 +1685,7 @@ namespace cryptonote
         [this, pubkey](bool success, std::vector<std::string> data) {
           const time_t local_seconds = time(nullptr);
           MDEBUG("Timestamp message received: " << data[0] <<", local time is: " << local_seconds);
-          if(success){ 
+          if(success){
             int64_t received_seconds;
             if (tools::parse_int(data[0],received_seconds)){
               uint16_t variance;
@@ -1694,10 +1697,10 @@ namespace cryptonote
               std::lock_guard<std::mutex> lk(m_sn_timestamp_mutex);
               // Records the variance into the record of our performance (m_sn_times)
               service_nodes::timesync_entry entry{variance <= service_nodes::THRESHOLD_SECONDS_OUT_OF_SYNC};
-              m_sn_times.add(entry); 
+              m_sn_times.add(entry);
 
               // Counts the number of times we have been out of sync
-              uint8_t num_sn_out_of_sync = std::count_if(m_sn_times.begin(), m_sn_times.end(), 
+              uint8_t num_sn_out_of_sync = std::count_if(m_sn_times.begin(), m_sn_times.end(),
                 [](const service_nodes::timesync_entry entry) { return !entry.in_sync; });
               if (num_sn_out_of_sync > (m_sn_times.array.size() * service_nodes::MAXIMUM_EXTERNAL_OUT_OF_SYNC/100)) {
                 MWARNING("service node time might be out of sync");
@@ -1906,6 +1909,32 @@ namespace cryptonote
   size_t core::get_blockchain_total_transactions() const
   {
     return m_blockchain_storage.get_total_transactions();
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::get_account_address_from_str_or_ons(
+      cryptonote::address_parse_info& info
+    , cryptonote::network_type nettype
+    , std::string str,
+      uint64_t height
+    )
+  {
+    bool result = false;
+    if (cryptonote::get_account_address_from_str(info, nettype, str))
+    {
+      result = true;
+    } else {
+      std::string name = tools::lowercase_ascii_string(std::move(str));
+      std::string reason;
+      ons::name_system_db& db = m_blockchain_storage.name_system_db();
+      if (ons::validate_ons_name(ons::mapping_type::wallet, str, &reason) && db.get_wallet_mapping(name, height, info))
+      {
+        result = true;
+        LOG_PRINT_L2("Resolved ONS name: "<< str << " to address: " << get_account_address_as_str(nettype, info.is_subaddress, info.address));
+      } else {
+        LOG_PRINT_L2("Invalid address format, could not resolve " << str);
+      }
+    }
+    return result;
   }
   //-----------------------------------------------------------------------------------------------
   bool core::relay_txpool_transactions()

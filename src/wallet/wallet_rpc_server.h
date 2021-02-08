@@ -184,6 +184,8 @@ namespace tools
           bool get_tx_key, Ts& tx_key, Tu &amount, Tu &fee, std::string &multisig_txset, std::string &unsigned_txset, bool do_not_relay, bool blink,
           Ts &tx_hash, bool get_tx_hex, Ts &tx_blob, bool get_tx_metadata, Ts &tx_metadata);
 
+      cryptonote::address_parse_info extract_account_addr(cryptonote::network_type nettype, std::string_view addr_or_url);
+
       void validate_transfer(const std::list<wallet::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination);
 
       // Parse options and opens the wallet.  Returns nullptr if in directory mode (i.e. no wallet

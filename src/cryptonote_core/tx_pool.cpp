@@ -1486,6 +1486,7 @@ namespace cryptonote
   {
     auto locks = tools::unique_locks(m_transactions_lock, m_blockchain);
 
+
     bool ret = false;
     for(const auto& in: tx.vin)
     {

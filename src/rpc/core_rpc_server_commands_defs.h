@@ -2437,7 +2437,7 @@ namespace rpc {
   // for Session and Lokinet.
   struct LNS_NAMES_TO_OWNERS : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_names_to_owners"); }
+    static constexpr auto names() { return NAMES("ons_names_to_owners", "lns_names_to_owners"); }
 
     static constexpr size_t MAX_REQUEST_ENTRIES      = 256;
     static constexpr size_t MAX_TYPE_REQUEST_ENTRIES = 8;
@@ -2481,12 +2481,34 @@ namespace rpc {
     };
   };
 
+  // Resolves a provided address, will return the address if valid or the the resolved ONS wallet mapping if valid ONS Name
+  struct ONS_RESOLVE_ADDRESS : PUBLIC
+  {
+    static constexpr auto names() { return NAMES("ons_resolve_address"); }
+
+    struct request
+    {
+      std::string address; // The address or name to resolve to a public key via Oxen Name Service.
+      uint64_t height;               // Optional: if provided and true, the result will be provided for a Oxen Name Resolved at this height
+
+      KV_MAP_SERIALIZABLE
+    };
+
+    struct response
+    {
+      std::optional<std::string> address; // The value that the address maps to.
+      std::string status; // Generic RPC error code. "OK" is the success value.
+
+      KV_MAP_SERIALIZABLE
+    };
+  };
+
   OXEN_RPC_DOC_INTROSPECT
   // Get all the name mappings for the queried owner. The owner can be either a ed25519 public key or Monero style
   // public key; by default purchases are owned by the spend public key of the purchasing wallet.
   struct LNS_OWNERS_TO_NAMES : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_owners_to_names"); }
+    static constexpr auto names() { return NAMES("ons_owners_to_names", "lns_owners_to_names"); }
 
     static constexpr size_t MAX_REQUEST_ENTRIES = 256;
     struct request
@@ -2542,7 +2564,7 @@ namespace rpc {
   //   first 24 bytes of the name hash as the public nonce.
   struct LNS_RESOLVE : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_resolve"); }
+    static constexpr auto names() { return NAMES("ons_resolve", "lns_resolve"); }
 
     struct request
     {
@@ -2660,9 +2682,10 @@ namespace rpc {
     REPORT_PEER_SS_STATUS,
     TEST_TRIGGER_P2P_RESYNC,
     TEST_TRIGGER_UPTIME_PROOF,
-    LNS_NAMES_TO_OWNERS,
-    LNS_OWNERS_TO_NAMES,
-    LNS_RESOLVE,
+    ONS_NAMES_TO_OWNERS,
+    ONS_OWNERS_TO_NAMES,
+    ONS_RESOLVE,
+    ONS_RESOLVE_ADDRESS,
     FLUSH_CACHE
   >;
 

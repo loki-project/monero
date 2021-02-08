@@ -1,5 +1,8 @@
 #include <bitset>
 #include <variant>
+#include <iterator>
+#include <vector>
+#include <algorithm>
 #include "common/hex.h"
 #include "oxen_name_system.h"
 
@@ -106,20 +109,7 @@ std::string lns::mapping_value::to_readable_value(cryptonote::network_type netty
   if (is_lokinet_type(type))
   {
     result = oxenmq::to_base32z(to_view()) + ".loki";
-  }
-  else if (type == lns::mapping_type::wallet)
-  {
-    cryptonote::address_parse_info addr_info = {};
-    if (len == sizeof(addr_info))
-    {
-      std::memcpy(&addr_info, buffer.data(), len);
-      result = cryptonote::get_account_address_as_str(nettype, addr_info.is_subaddress, addr_info.address);
-    }
-    else
-      result = "(error unknown wallet address)";
-  }
-  else
-  {
+  } else {
     result = oxenmq::to_hex(to_view());
   }
 
@@ -165,11 +155,14 @@ int step(sql_compiled_statement& s)
 /// `bind()` binds a particular parameter to a statement by index.  The bind type is inferred from
 /// the argument.
 
+//TODO sean fix this
 // Small (<=32 bits) integers
+//template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) <= 4), int> = 0>
 template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) <= 32), int> = 0>
 bool bind(sql_compiled_statement& s, int index, const T& val) { return SQLITE_OK == sqlite3_bind_int(s.statement, index, val); }
 
 // Big (>32 bits) integers
+//template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) > 4), int> = 0>
 template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) > 32), int> = 0>
 bool bind(sql_compiled_statement& s, int index, const T& val) { return SQLITE_OK == sqlite3_bind_int64(s.statement, index, val); }
 
@@ -612,6 +605,8 @@ std::vector<mapping_type> all_mapping_types(uint8_t hf_version) {
     result.push_back(mapping_type::session);
   if (hf_version >= cryptonote::network_version_16_pulse)
     result.push_back(mapping_type::lokinet);
+  if (hf_version >= cryptonote::network_version_17)
+    result.push_back(mapping_type::wallet);
   return result;
 }
 
@@ -846,9 +841,31 @@ bool validate_lns_name(mapping_type type, std::string name, std::string *reason)
           reason, "LNS type=", type, ", specifies mapping from name->value where the name contains more than the permitted alphanumeric, underscore or hyphen characters, name=", name))
       return false;
   }
+  else if (type == mapping_type::wallet)
+  {
+    // WALLET
+    // Name has to start with a (alphanumeric or underscore), and can have (alphanumeric, hyphens or underscores) in between and must end with a (alphanumeric or underscore)
+    // ^[a-z0-9_]([a-z0-9-_]*[a-z0-9_])?$
+    // Must start with (alphanumeric or underscore)
+    if (check_condition(!char_is_alphanum_or<'_'>(name_view.front()), reason, "ONS type=", type, ", specifies mapping from name->value where the name does not start with an alphanumeric or underscore character, name=", name))
+      return false;
+    name_view.remove_prefix(1);
+
+    if (!name_view.empty()) {
+      // Must NOT end with a hyphen '-'
+      if (check_condition(!char_is_alphanum_or<'_'>(name_view.back()), reason, "ONS type=", type, ", specifies mapping from name->value where the last character is a hyphen '-' which is disallowed, name=", name))
+        return false;
+      name_view.remove_suffix(1);
+    }
+
+    // Inbetween start and preceding suffix, (alphanumeric, hyphen or underscore) characters permitted
+    if (check_condition(!std::all_of(name_view.begin(), name_view.end(), char_is_alphanum_or<'-', '_'>),
+          reason, "ONS type=", type, ", specifies mapping from name->value where the name contains more than the permitted alphanumeric, underscore or hyphen characters, name=", name))
+      return false;
+  }
   else
   {
-    MERROR("Wallet names not yet implemented");
+    MERROR("Type not implemented");
     return false;
   }
 
@@ -857,7 +874,13 @@ bool validate_lns_name(mapping_type type, std::string name, std::string *reason)
 
 static bool check_lengths(mapping_type type, std::string_view value, size_t max, bool binary_val, std::string *reason)
 {
-  bool result = (value.size() == max);
+  bool result;
+  if (type == mapping_type::wallet)
+  {
+    result = (value.size() == (WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID + max) || value.size() == (WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID + max));
+  } else {
+    result = (value.size() == max);
+  }
   if (!result)
   {
     if (reason)
@@ -873,6 +896,7 @@ static bool check_lengths(mapping_type type, std::string_view value, size_t max,
   return result;
 }
 
+//This function checks that the value is valid but it also will copy the value into the mapping_value buffer ready for mapping_value::encrypt()
 bool mapping_value::validate(cryptonote::network_type nettype, mapping_type type, std::string_view value, mapping_value *blob, std::string *reason)
 {
   if (blob) *blob = {};
@@ -903,8 +927,24 @@ bool mapping_value::validate(cryptonote::network_type nettype, mapping_type type
     // Validate blob contents and generate the binary form if possible
     if (blob)
     {
-      blob->len = sizeof(addr_info);
-      std::memcpy(blob->buffer.data(), &addr_info, blob->len);
+      auto iter = blob->buffer.begin();
+      uint8_t identifier = 0;
+      if (addr_info.is_subaddress) {
+        identifier |= 0x01;
+      } else if (addr_info.has_payment_id) {
+        identifier |= 0x02;
+      }
+      iter = std::copy_n(&identifier, 1, iter);
+      iter = std::copy_n(addr_info.address.m_spend_public_key.data, sizeof(addr_info.address.m_spend_public_key.data), iter);
+      iter = std::copy_n(addr_info.address.m_view_public_key.data, sizeof(addr_info.address.m_view_public_key.data), iter);
+
+      size_t counter = 65;
+      if (addr_info.has_payment_id) {
+        std::copy_n(addr_info.payment_id.data, sizeof(addr_info.payment_id.data), iter);
+        counter+=sizeof(addr_info.payment_id);
+      }
+
+      blob->len = counter;
     }
   }
   else if (is_lokinet_type(type))
@@ -954,12 +994,19 @@ bool mapping_value::validate_encrypted(mapping_type type, std::string_view value
 {
   if (blob) *blob = {};
   std::stringstream err_stream;
+
   int value_len = crypto_aead_xchacha20poly1305_ietf_ABYTES + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-  if (is_lokinet_type(type)) value_len              += LOKINET_ADDRESS_BINARY_LENGTH;
-  else if (type == mapping_type::wallet)  value_len += WALLET_ACCOUNT_BINARY_LENGTH;
+
+  if (is_lokinet_type(type))
+    value_len += LOKINET_ADDRESS_BINARY_LENGTH;
+  else if (type == mapping_type::wallet)
+  {
+    value_len = crypto_aead_xchacha20poly1305_ietf_ABYTES + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES; //Add the length in check_length
+  }
   else if (type == mapping_type::session)
   {
     value_len += SESSION_PUBLIC_KEY_BINARY_LENGTH;
+
 
     // Allow an HF15 argon2 encrypted value which doesn't contain a nonce:
     if (value.size() == value_len - crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
@@ -1082,6 +1129,25 @@ static bool validate_against_previous_mapping(lns::name_system_db &lns_db, uint6
           "Cannot buy an LNS name that is already registered: name_hash=", mapping.name_hash, ", type=", mapping.type,
           "; TX: ", tx, "; ", lns_extra_string(lns_db.network_type(), lns_extra)))
         return false;
+
+    // If buying a new wallet name then the existing session name must not be active and vice versa
+    // The owner of an existing name but different type is allowed to register but the owner and backup owners
+    // of the new mapping must be from the same owners and backup owners of the previous mapping ie no
+    // new addresses are allowed to be added as owner or backup owner.
+    if (ons_extra.type == mapping_type::wallet)
+    {
+      ons::mapping_record session_mapping = ons_db.get_mapping(mapping_type::session, name_hash);
+      if (check_condition(session_mapping.active(blockchain_height) && (!(session_mapping.owner == ons_extra.owner || session_mapping.backup_owner == ons_extra.owner) || !(!ons_extra.field_is_set(ons::extra_field::backup_owner) || session_mapping.backup_owner == ons_extra.backup_owner || session_mapping.owner == ons_extra.backup_owner)), reason,
+            "Cannot buy an ONS wallet name that has an already registered session name: name_hash=", mapping.name_hash, ", type=", mapping.type,
+            "; TX: ", tx, "; ", ons_extra_string(ons_db.network_type(), ons_extra)))
+          return false;
+    } else if (ons_extra.type == mapping_type::session) {
+      ons::mapping_record wallet_mapping = ons_db.get_mapping(mapping_type::wallet, name_hash);
+      if (check_condition(wallet_mapping.active(blockchain_height) && (!(wallet_mapping.owner == ons_extra.owner || wallet_mapping.backup_owner == ons_extra.owner) || !(!ons_extra.field_is_set(ons::extra_field::backup_owner) || wallet_mapping.backup_owner == ons_extra.backup_owner || wallet_mapping.owner == ons_extra.backup_owner)), reason,
+            "Cannot buy an ONS session name that has an already registered wallet name: name_hash=", mapping.name_hash, ", type=", mapping.type,
+            "; TX: ", tx, "; ", ons_extra_string(ons_db.network_type(), ons_extra)))
+          return false;
+    }
   }
   else if (lns_extra.is_renewing())
   {
@@ -1179,6 +1245,8 @@ bool name_system_db::validate_lns_tx(uint8_t hf_version, uint64_t blockchain_hei
 
     if (!validate_against_previous_mapping(*this, blockchain_height, tx, lns_extra, reason))
       return false;
+
+
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -1220,14 +1288,19 @@ bool validate_mapping_type(std::string_view mapping_type_str, uint8_t hf_version
         mapping_type_ = lns::mapping_type::lokinet_10years;
     }
   }
+  if (hf_version >= cryptonote::network_version_17)
+  {
+    if (tools::string_iequal(mapping, "wallet"))
+      mapping_type_ = lns::mapping_type::wallet;
+  }
 
   if (!mapping_type_)
   {
     if (reason) *reason = "Unsupported LNS type \"" + std::string{mapping_type_str} + "\"; supported " + (
-        txtype == lns_tx_type::update ? "update types are: session, lokinet" :
+        txtype == lns_tx_type::update ? "update types are: session, lokinet, wallet" :
         txtype == lns_tx_type::renew  ? "renew types are: lokinet_1y, lokinet_2y, lokinet_5y, lokinet_10y" :
         txtype == lns_tx_type::buy    ? "buy types are session, lokinet_1y, lokinet_2y, lokinet_5y, lokinet_10y"
-                                      : "lookup types are session, lokinet");
+                                      : "lookup types are session, lokinet, wallet");
     return false;
   }
 
@@ -1384,7 +1457,17 @@ bool mapping_value::decrypt(std::string_view name, mapping_type type, const cryp
     switch(type) {
       case mapping_type::session: dec_length = SESSION_PUBLIC_KEY_BINARY_LENGTH; break;
       case mapping_type::lokinet: dec_length = LOKINET_ADDRESS_BINARY_LENGTH; break;
-      case mapping_type::wallet:  dec_length = WALLET_ACCOUNT_BINARY_LENGTH; break;
+      case mapping_type::wallet: //Wallet type has variable type, check performed in check_length
+        if (len == WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID + crypto_aead_xchacha20poly1305_ietf_ABYTES + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
+        {
+          dec_length = WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID;
+        } else if (len == WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID + crypto_aead_xchacha20poly1305_ietf_ABYTES + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
+        {
+          dec_length = WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID;
+        } else {
+          MERROR("Invalid wallet mapping_type length passed to mapping_value::decrypt"); return false;
+        }
+        break;
       default: MERROR("Invalid mapping_type passed to mapping_value::decrypt"); return false;
     }
 
@@ -2116,6 +2199,31 @@ owner_record name_system_db::get_owner_by_id(int64_t owner_id)
   result.loaded       = bind_and_run(lns_sql_type::get_owner, get_owner_by_id_sql, &result,
       owner_id);
   return result;
+}
+
+bool name_system_db::get_wallet_mapping(std::string str, uint64_t blockchain_height, cryptonote::address_parse_info& addr_info)
+{
+  std::string name = tools::lowercase_ascii_string(std::move(str));
+  std::string b64_hashed_name = ons::name_to_base64_hash(name);
+  if (auto record = name_system_db::resolve(mapping_type::wallet, b64_hashed_name, blockchain_height)){
+    (*record).decrypt(name, mapping_type::wallet);
+
+    auto iter = std::next((*record).buffer.begin(),1);
+    std::memcpy(&addr_info.address.m_spend_public_key.data, &*iter, 32);
+    std::advance(iter,32);
+    std::memcpy(&addr_info.address.m_view_public_key.data, &*iter, 32);
+    if ((*record).buffer[0] == 0x2) {
+      std::advance(iter,32);
+      std::copy_n(iter,8,addr_info.payment_id.data);
+      addr_info.has_payment_id = true;
+    } else if ((*record).buffer[0] == 0x1) {
+      addr_info.is_subaddress = true;
+    }
+
+    return true;
+
+  }
+  return false;
 }
 
 mapping_record name_system_db::get_mapping(mapping_type type, std::string_view name_base64_hash, std::optional<uint64_t> blockchain_height)

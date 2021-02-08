@@ -58,8 +58,18 @@ namespace po = boost::program_options;
 
 using namespace std::literals;
 
+namespace {
+  // Some ANSI color sequences that we use here (before the log system is initialized):
+  constexpr auto RESET = "\033[0m";
+  constexpr auto RED = "\033[31;1m";
+  constexpr auto YELLOW = "\033[33;1m";
+  constexpr auto CYAN = "\033[36;1m";
+}
+
+
 int main(int argc, char const * argv[])
 {
+  bool logs_initialized = false;
   try {
     // TODO parse the debug options like set log level right here at start
 
@@ -116,12 +126,6 @@ int main(int argc, char const * argv[])
       return true;
     });
     if (!ok) return 1;
-
-    // Some ANSI color sequences that we use here (before the log system is initialized):
-    constexpr auto RESET = "\033[0m";
-    constexpr auto RED = "\033[31;1m";
-    constexpr auto YELLOW = "\033[33;1m";
-    constexpr auto CYAN = "\033[36;1m";
 
     if (command_line::get_arg(vm, command_line::arg_help))
     {
@@ -284,7 +288,7 @@ int main(int argc, char const * argv[])
     // Create the data directory; we have to do this before initializing the logs because the log
     // likely goes inside the data dir.
     if (std::error_code ec; !fs::create_directories(data_dir, ec) && ec)
-      MWARNING("Failed to create data directory " << data_dir << ": " << ec.message());
+      std::cerr << YELLOW << "Failed to create data directory " << data_dir << ": " << ec.message() << RESET << "\n";
 
     po::notify(vm);
 
@@ -297,7 +301,7 @@ int main(int argc, char const * argv[])
     if (!command_line::is_arg_defaulted(vm, daemon_args::arg_log_file))
       log_file_path = command_line::get_arg(vm, daemon_args::arg_log_file);
     if (log_file_path.is_relative())
-      log_file_path = fs::absolute(fs::relative(log_file_path, data_dir));
+      log_file_path = fs::absolute(data_dir / log_file_path);
     mlog_configure(log_file_path.string(), true, command_line::get_arg(vm, daemon_args::arg_max_log_file_size), command_line::get_arg(vm, daemon_args::arg_max_log_files));
 
     // Set log level
@@ -305,6 +309,7 @@ int main(int argc, char const * argv[])
     {
       mlog_set_log(command_line::get_arg(vm, daemon_args::arg_log_level).c_str());
     }
+    logs_initialized = true;
 
 #ifdef STACK_TRACE
     tools::set_stack_trace_log(log_file_path.filename().string());
@@ -359,11 +364,17 @@ int main(int argc, char const * argv[])
   }
   catch (std::exception const & ex)
   {
-    LOG_ERROR("Exception in main! " << ex.what());
+    if (logs_initialized)
+      LOG_ERROR("Exception in main! " << ex.what());
+    else
+      std::cerr << RED << "Exception in main! " << ex.what() << RESET << "\n";
   }
   catch (...)
   {
-    LOG_ERROR("Exception in main!");
+    if (logs_initialized)
+      LOG_ERROR("Exception in main! (unknown exception type)");
+    else
+      std::cerr << RED << "Exception in main! (unknown exception type)" << RESET << "\n";
   }
   return 1;
 }

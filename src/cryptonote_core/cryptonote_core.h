@@ -1042,6 +1042,13 @@ namespace cryptonote
       */
      const fs::path& get_config_directory() const { return m_config_folder; }
 
+     /**
+      * @brief checks if an address is valid, can accept an address or a oxen name service wallet mapping
+      *
+      * @return true if valid address
+      */
+     bool get_account_address_from_str_or_ons( address_parse_info& info , network_type nettype , std::string str_or_url, uint64_t height);
+
  private:
 
      /**

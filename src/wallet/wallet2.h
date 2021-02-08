@@ -817,6 +817,7 @@ private:
     std::vector<cryptonote::rpc::GET_SERVICE_NODES::response::entry> list_current_stakes();
     auto lns_owners_to_names(cryptonote::rpc::LNS_OWNERS_TO_NAMES::request const &request) const { return m_node_rpc_proxy.lns_owners_to_names(request); }
     auto lns_names_to_owners(cryptonote::rpc::LNS_NAMES_TO_OWNERS::request const &request) const { return m_node_rpc_proxy.lns_names_to_owners(request); }
+    auto resolve_address(cryptonote::rpc::ONS_RESOLVE_ADDRESS::request const &request) const { return m_node_rpc_proxy.ons_resolve_address(request); }
 
     struct lns_detail
     {
