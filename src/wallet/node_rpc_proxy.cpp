@@ -350,4 +350,9 @@ std::pair<bool, cryptonote::rpc::ONS_RESOLVE_ADDRESS::response> NodeRPCProxy::on
   return get_result_pair<rpc::ONS_RESOLVE_ADDRESS>(request, [](auto&& res) { return std::move(res); });
 }
 
+std::pair<bool, cryptonote::rpc::ONS_RESOLVE_ADDRESS::response> NodeRPCProxy::ons_resolve_address(cryptonote::rpc::ONS_RESOLVE_ADDRESS::request const &request) const
+{
+  return get_result_pair<rpc::ONS_RESOLVE_ADDRESS>(request, [](auto&& res) { return std::move(res); });
+}
+
 }

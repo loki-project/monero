@@ -155,12 +155,15 @@ int step(sql_compiled_statement& s)
 /// `bind()` binds a particular parameter to a statement by index.  The bind type is inferred from
 /// the argument.
 
+//TODO sean fix this
 // Small (<=32 bits) integers
-template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) <= 4), int> = 0>
+//template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) <= 4), int> = 0>
+template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) <= 32), int> = 0>
 bool bind(sql_compiled_statement& s, int index, const T& val) { return SQLITE_OK == sqlite3_bind_int(s.statement, index, val); }
 
 // Big (>32 bits) integers
-template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) > 4), int> = 0>
+//template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) > 4), int> = 0>
+template <typename T, std::enable_if_t<std::is_integral_v<T> && (sizeof(T) > 32), int> = 0>
 bool bind(sql_compiled_statement& s, int index, const T& val) { return SQLITE_OK == sqlite3_bind_int64(s.statement, index, val); }
 
 // Floats/doubles
@@ -821,6 +824,28 @@ bool validate_ons_name(mapping_type type, std::string name, std::string *reason)
     // Name has to start with a (alphanumeric or underscore), and can have (alphanumeric, hyphens or underscores) in between and must end with a (alphanumeric or underscore)
     // ^[a-z0-9_]([a-z0-9-_]*[a-z0-9_])?$
 
+    // Must start with (alphanumeric or underscore)
+    if (check_condition(!char_is_alphanum_or<'_'>(name_view.front()), reason, "ONS type=", type, ", specifies mapping from name->value where the name does not start with an alphanumeric or underscore character, name=", name))
+      return false;
+    name_view.remove_prefix(1);
+
+    if (!name_view.empty()) {
+      // Must NOT end with a hyphen '-'
+      if (check_condition(!char_is_alphanum_or<'_'>(name_view.back()), reason, "ONS type=", type, ", specifies mapping from name->value where the last character is a hyphen '-' which is disallowed, name=", name))
+        return false;
+      name_view.remove_suffix(1);
+    }
+
+    // Inbetween start and preceding suffix, (alphanumeric, hyphen or underscore) characters permitted
+    if (check_condition(!std::all_of(name_view.begin(), name_view.end(), char_is_alphanum_or<'-', '_'>),
+          reason, "ONS type=", type, ", specifies mapping from name->value where the name contains more than the permitted alphanumeric, underscore or hyphen characters, name=", name))
+      return false;
+  }
+  else if (type == mapping_type::wallet)
+  {
+    // WALLET
+    // Name has to start with a (alphanumeric or underscore), and can have (alphanumeric, hyphens or underscores) in between and must end with a (alphanumeric or underscore)
+    // ^[a-z0-9_]([a-z0-9-_]*[a-z0-9_])?$
     // Must start with (alphanumeric or underscore)
     if (check_condition(!char_is_alphanum_or<'_'>(name_view.front()), reason, "ONS type=", type, ", specifies mapping from name->value where the name does not start with an alphanumeric or underscore character, name=", name))
       return false;
