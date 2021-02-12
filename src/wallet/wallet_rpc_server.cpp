@@ -3063,17 +3063,17 @@ namespace {
     return res;
   }
 
-  LNS_BUY_MAPPING::response wallet_rpc_server::invoke(LNS_BUY_MAPPING::request&& req)
+  ONS_BUY_MAPPING::response wallet_rpc_server::invoke(ONS_BUY_MAPPING::request&& req)
   {
     require_open();
-    LNS_BUY_MAPPING::response res{};
+    ONS_BUY_MAPPING::response res{};
 
     std::string reason;
-    auto type = m_wallet->lns_validate_type(req.type, lns::lns_tx_type::buy, &reason);
+    auto type = m_wallet->ons_validate_type(req.type, ons::ons_tx_type::buy, &reason);
     if (!type)
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid LNS buy type: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid ONS buy type: " + reason};
 
-    std::vector<wallet2::pending_tx> ptx_vector = m_wallet->lns_create_buy_mapping_tx(*type,
+    std::vector<wallet2::pending_tx> ptx_vector = m_wallet->ons_create_buy_mapping_tx(*type,
                                                                                       req.owner.size() ? &req.owner : nullptr,
                                                                                       req.backup_owner.size() ? &req.backup_owner : nullptr,
                                                                                       req.name,
@@ -3083,15 +3083,15 @@ namespace {
                                                                                       req.account_index,
                                                                                       req.subaddr_indices);
     if (ptx_vector.empty())
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create LNS transaction: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create ONS transaction: " + reason};
 
-    //Save the LNS record to the wallet cache
-    std::string name_hash_str = lns::name_to_base64_hash(req.name);
-    tools::wallet2::lns_detail detail = {
+    //Save the ONS record to the wallet cache
+    std::string name_hash_str = ons::name_to_base64_hash(req.name);
+    tools::wallet2::ons_detail detail = {
       *type,
       req.name,
       name_hash_str};
-    m_wallet->set_lns_cache_record(detail);
+    m_wallet->set_ons_cache_record(detail);
 
     fill_response(         ptx_vector,
                            req.get_tx_key,
@@ -3111,21 +3111,21 @@ namespace {
     return res;
   }
 
-  LNS_RENEW_MAPPING::response wallet_rpc_server::invoke(LNS_RENEW_MAPPING::request&& req)
+  ONS_RENEW_MAPPING::response wallet_rpc_server::invoke(ONS_RENEW_MAPPING::request&& req)
   {
     require_open();
-    LNS_RENEW_MAPPING::response res{};
+    ONS_RENEW_MAPPING::response res{};
 
     std::string reason;
-    auto type = m_wallet->lns_validate_type(req.type, lns::lns_tx_type::renew, &reason);
+    auto type = m_wallet->ons_validate_type(req.type, ons::ons_tx_type::renew, &reason);
     if (!type)
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid LNS renewal type: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid ONS renewal type: " + reason};
 
-    std::vector<wallet2::pending_tx> ptx_vector = m_wallet->lns_create_renewal_tx(
+    std::vector<wallet2::pending_tx> ptx_vector = m_wallet->ons_create_renewal_tx(
         *type, req.name, &reason, req.priority, req.account_index, req.subaddr_indices);
 
     if (ptx_vector.empty())
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create LNS renewal transaction: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create ONS renewal transaction: " + reason};
 
     fill_response(         ptx_vector,
                            req.get_tx_key,
@@ -3145,18 +3145,18 @@ namespace {
     return res;
   }
 
-  LNS_UPDATE_MAPPING::response wallet_rpc_server::invoke(LNS_UPDATE_MAPPING::request&& req)
+  ONS_UPDATE_MAPPING::response wallet_rpc_server::invoke(ONS_UPDATE_MAPPING::request&& req)
   {
     require_open();
-    LNS_UPDATE_MAPPING::response res{};
+    ONS_UPDATE_MAPPING::response res{};
 
     std::string reason;
-    auto type = m_wallet->lns_validate_type(req.type, lns::lns_tx_type::update, &reason);
+    auto type = m_wallet->ons_validate_type(req.type, ons::ons_tx_type::update, &reason);
     if (!type)
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid LNS update type: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Invalid ONS update type: " + reason};
 
     std::vector<wallet2::pending_tx> ptx_vector =
-        m_wallet->lns_create_update_mapping_tx(*type,
+        m_wallet->ons_create_update_mapping_tx(*type,
                                                req.name,
                                                req.value.empty()        ? nullptr : &req.value,
                                                req.owner.empty()        ? nullptr : &req.owner,
@@ -3168,16 +3168,16 @@ namespace {
                                                req.subaddr_indices);
 
     if (ptx_vector.empty())
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create LNS update transaction: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create ONS update transaction: " + reason};
 
-    // Save the updated LNS record to the wallet cache
-    std::string name_hash_str = lns::name_to_base64_hash(req.name);
-    m_wallet->delete_lns_cache_record(name_hash_str);
-    tools::wallet2::lns_detail detail = {
+    // Save the updated ONS record to the wallet cache
+    std::string name_hash_str = ons::name_to_base64_hash(req.name);
+    m_wallet->delete_ons_cache_record(name_hash_str);
+    tools::wallet2::ons_detail detail = {
       *type,
       req.name,
       name_hash_str};
-    m_wallet->set_lns_cache_record(detail);
+    m_wallet->set_ons_cache_record(detail);
 
     fill_response(         ptx_vector,
                            req.get_tx_key,
@@ -3197,20 +3197,20 @@ namespace {
     return res;
   }
 
-  LNS_MAKE_UPDATE_SIGNATURE::response wallet_rpc_server::invoke(LNS_MAKE_UPDATE_SIGNATURE::request&& req)
+  ONS_MAKE_UPDATE_SIGNATURE::response wallet_rpc_server::invoke(ONS_MAKE_UPDATE_SIGNATURE::request&& req)
   {
     require_open();
-    LNS_MAKE_UPDATE_SIGNATURE::response res{};
+    ONS_MAKE_UPDATE_SIGNATURE::response res{};
 
     std::string reason;
-    lns::mapping_type type;
+    ons::mapping_type type;
     std::optional<uint8_t> hf_version = m_wallet->get_hard_fork_version();
     if (!hf_version) throw wallet_rpc_error{error_code::HF_QUERY_FAILED, tools::ERR_MSG_NETWORK_VERSION_QUERY_FAILED};
-    if (!lns::validate_mapping_type(req.type, *hf_version, lns::lns_tx_type::update, &type, &reason))
-      throw wallet_rpc_error{error_code::WRONG_LNS_TYPE, "Wrong lns type given=" + reason};
+    if (!ons::validate_mapping_type(req.type, *hf_version, ons::ons_tx_type::update, &type, &reason))
+      throw wallet_rpc_error{error_code::WRONG_ONS_TYPE, "Wrong ons type given=" + reason};
 
-    lns::generic_signature signature;
-    if (!m_wallet->lns_make_update_mapping_signature(type,
+    ons::generic_signature signature;
+    if (!m_wallet->ons_make_update_mapping_signature(type,
                                                      req.name,
                                                      req.encrypted_value.size() ? &req.encrypted_value : nullptr,
                                                      req.owner.size() ? &req.owner : nullptr,
@@ -3218,53 +3218,53 @@ namespace {
                                                      signature,
                                                      req.account_index,
                                                      &reason))
-      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create signature for LNS update transaction: " + reason};
+      throw wallet_rpc_error{error_code::TX_NOT_POSSIBLE, "Failed to create signature for ONS update transaction: " + reason};
 
     res.signature = tools::type_to_hex(signature.ed25519);
     return res;
   }
 
-  LNS_HASH_NAME::response wallet_rpc_server::invoke(LNS_HASH_NAME::request&& req)
+  ONS_HASH_NAME::response wallet_rpc_server::invoke(ONS_HASH_NAME::request&& req)
   {
     require_open();
-    LNS_HASH_NAME::response res{};
+    ONS_HASH_NAME::response res{};
 
     std::string reason;
-    lns::mapping_type type;
+    ons::mapping_type type;
     std::optional<uint8_t> hf_version = m_wallet->get_hard_fork_version();
     if (!hf_version) throw wallet_rpc_error{error_code::HF_QUERY_FAILED, tools::ERR_MSG_NETWORK_VERSION_QUERY_FAILED};
-    if (!lns::validate_mapping_type(req.type, *hf_version, lns::lns_tx_type::lookup, &type, &reason))
-      throw wallet_rpc_error{error_code::WRONG_LNS_TYPE, "Wrong lns type given=" + reason};
+    if (!ons::validate_mapping_type(req.type, *hf_version, ons::ons_tx_type::lookup, &type, &reason))
+      throw wallet_rpc_error{error_code::WRONG_ONS_TYPE, "Wrong ons type given=" + reason};
 
-    if (!lns::validate_lns_name(type, req.name, &reason))
-      throw wallet_rpc_error{error_code::LNS_BAD_NAME, "Bad lns name given=" + reason};
+    if (!ons::validate_ons_name(type, req.name, &reason))
+      throw wallet_rpc_error{error_code::ONS_BAD_NAME, "Bad ons name given=" + reason};
 
-    res.name = lns::name_to_base64_hash(req.name);
+    res.name = ons::name_to_base64_hash(req.name);
     return res;
   }
 
-  LNS_KNOWN_NAMES::response wallet_rpc_server::invoke(LNS_KNOWN_NAMES::request&& req)
+  ONS_KNOWN_NAMES::response wallet_rpc_server::invoke(ONS_KNOWN_NAMES::request&& req)
   {
     require_open();
-    LNS_KNOWN_NAMES::response res{};
+    ONS_KNOWN_NAMES::response res{};
 
-    std::vector<lns::mapping_type> entry_types;
-    auto cache = m_wallet->get_lns_cache();
+    std::vector<ons::mapping_type> entry_types;
+    auto cache = m_wallet->get_ons_cache();
     res.known_names.reserve(cache.size());
     entry_types.reserve(cache.size());
-    for (auto& [name, details] : m_wallet->get_lns_cache())
+    for (auto& [name, details] : m_wallet->get_ons_cache())
     {
       auto& entry = res.known_names.emplace_back();
       auto& type = entry_types.emplace_back(details.type);
-      if (type > lns::mapping_type::lokinet && type <= lns::mapping_type::lokinet_10years)
-        type = lns::mapping_type::lokinet;
-      entry.type = lns::mapping_type_str(type);
+      if (type > ons::mapping_type::lokinet && type <= ons::mapping_type::lokinet_10years)
+        type = ons::mapping_type::lokinet;
+      entry.type = ons::mapping_type_str(type);
       entry.hashed = details.hashed_name;
       entry.name = details.name;
     }
 
     auto nettype = m_wallet->nettype();
-    rpc::LNS_NAMES_TO_OWNERS::request lookup_req{};
+    rpc::ONS_NAMES_TO_OWNERS::request lookup_req{};
     lookup_req.include_expired = req.include_expired;
 
     uint64_t curr_height = req.include_expired ? m_wallet->get_blockchain_current_height() : 0;
@@ -3273,9 +3273,9 @@ namespace {
     for (auto it = res.known_names.begin(); it != res.known_names.end(); )
     {
       const size_t num_entries = std::distance(it, res.known_names.end());
-      const auto end = num_entries < rpc::LNS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES
+      const auto end = num_entries < rpc::ONS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES
           ? res.known_names.end()
-          : it + rpc::LNS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES;
+          : it + rpc::ONS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES;
       lookup_req.entries.clear();
       lookup_req.entries.reserve(std::distance(it, end));
       for (auto it2 = it; it2 != end; it2++)
@@ -3285,7 +3285,7 @@ namespace {
         e.types.push_back(static_cast<uint16_t>(entry_types[std::distance(res.known_names.begin(), it2)]));
       }
 
-      if (auto [success, records] = m_wallet->lns_names_to_owners(lookup_req); success)
+      if (auto [success, records] = m_wallet->ons_names_to_owners(lookup_req); success)
       {
         size_t type_offset = std::distance(res.known_names.begin(), it);
         for (auto& rec : records)
@@ -3308,14 +3308,14 @@ namespace {
 
           if (req.decrypt && !res_e.encrypted_value.empty() && oxenmq::is_hex(res_e.encrypted_value))
           {
-            lns::mapping_value value;
+            ons::mapping_value value;
             const auto type = entry_types[type_offset + rec.entry_index];
             std::string errmsg;
-            if (lns::mapping_value::validate_encrypted(type, oxenmq::from_hex(res_e.encrypted_value), &value, &errmsg)
+            if (ons::mapping_value::validate_encrypted(type, oxenmq::from_hex(res_e.encrypted_value), &value, &errmsg)
                 && value.decrypt(res_e.name, type))
               res_e.value = value.to_readable_value(nettype, type);
             else
-              MWARNING("Failed to decrypt LNS value for " << res_e.name << (errmsg.empty() ? ""s : ": " + errmsg));
+              MWARNING("Failed to decrypt ONS value for " << res_e.name << (errmsg.empty() ? ""s : ": " + errmsg));
           }
         }
       }
@@ -3335,7 +3335,7 @@ namespace {
     return res;
   }
 
-  LNS_ADD_KNOWN_NAMES::response wallet_rpc_server::invoke(LNS_ADD_KNOWN_NAMES::request&& req)
+  ONS_ADD_KNOWN_NAMES::response wallet_rpc_server::invoke(ONS_ADD_KNOWN_NAMES::request&& req)
   {
     require_open();
 
@@ -3345,24 +3345,24 @@ namespace {
     std::string reason;
     for (auto& rec : req.names)
     {
-      lns::mapping_type type;
-      if (!lns::validate_mapping_type(rec.type, *hf_version, lns::lns_tx_type::lookup, &type, &reason))
-        throw wallet_rpc_error{error_code::WRONG_LNS_TYPE, "Invalid LNS type: " + reason};
+      ons::mapping_type type;
+      if (!ons::validate_mapping_type(rec.type, *hf_version, ons::ons_tx_type::lookup, &type, &reason))
+        throw wallet_rpc_error{error_code::WRONG_ONS_TYPE, "Invalid ONS type: " + reason};
 
       auto name = tools::lowercase_ascii_string(rec.name);
-      if (!lns::validate_lns_name(type, name, &reason))
-        throw wallet_rpc_error{error_code::LNS_BAD_NAME, "Invalid LNS name '" + name + "': " + reason};
+      if (!ons::validate_ons_name(type, name, &reason))
+        throw wallet_rpc_error{error_code::ONS_BAD_NAME, "Invalid ONS name '" + name + "': " + reason};
 
-      m_wallet->set_lns_cache_record({type, name, lns::name_to_base64_hash(name)});
+      m_wallet->set_ons_cache_record({type, name, ons::name_to_base64_hash(name)});
     }
 
     return {};
   }
 
-  LNS_DECRYPT_VALUE::response wallet_rpc_server::invoke(LNS_DECRYPT_VALUE::request&& req)
+  ONS_DECRYPT_VALUE::response wallet_rpc_server::invoke(ONS_DECRYPT_VALUE::request&& req)
   {
     require_open();
-    LNS_DECRYPT_VALUE::response res{};
+    ONS_DECRYPT_VALUE::response res{};
 
     // ---------------------------------------------------------------------------------------------
     //
@@ -3370,13 +3370,13 @@ namespace {
     //
     // ---------------------------------------------------------------------------------------------
     if (req.encrypted_value.size() % 2 != 0)
-      throw wallet_rpc_error{error_code::LNS_VALUE_LENGTH_NOT_EVEN, "Value length not divisible by 2, length=" + std::to_string(req.encrypted_value.size())};
+      throw wallet_rpc_error{error_code::ONS_VALUE_LENGTH_NOT_EVEN, "Value length not divisible by 2, length=" + std::to_string(req.encrypted_value.size())};
 
-    if (req.encrypted_value.size() >= (lns::mapping_value::BUFFER_SIZE * 2))
-      throw wallet_rpc_error{error_code::LNS_VALUE_TOO_LONG, "Value too long to decrypt=" + req.encrypted_value};
+    if (req.encrypted_value.size() >= (ons::mapping_value::BUFFER_SIZE * 2))
+      throw wallet_rpc_error{error_code::ONS_VALUE_TOO_LONG, "Value too long to decrypt=" + req.encrypted_value};
 
     if (!oxenmq::is_hex(req.encrypted_value))
-      throw wallet_rpc_error{error_code::LNS_VALUE_NOT_HEX, "Value is not hex=" + req.encrypted_value};
+      throw wallet_rpc_error{error_code::ONS_VALUE_NOT_HEX, "Value is not hex=" + req.encrypted_value};
 
     // ---------------------------------------------------------------------------------------------
     //
@@ -3384,16 +3384,16 @@ namespace {
     //
     // ---------------------------------------------------------------------------------------------
     std::string reason;
-    lns::mapping_type type = {};
+    ons::mapping_type type = {};
 
     std::optional<uint8_t> hf_version = m_wallet->get_hard_fork_version();
     if (!hf_version) throw wallet_rpc_error{error_code::HF_QUERY_FAILED, tools::ERR_MSG_NETWORK_VERSION_QUERY_FAILED};
     {
-      if (!lns::validate_mapping_type(req.type, *hf_version, lns::lns_tx_type::lookup, &type, &reason))
-        throw wallet_rpc_error{error_code::WRONG_LNS_TYPE, "Invalid LNS type: " + reason};
+      if (!ons::validate_mapping_type(req.type, *hf_version, ons::ons_tx_type::lookup, &type, &reason))
+        throw wallet_rpc_error{error_code::WRONG_ONS_TYPE, "Invalid ONS type: " + reason};
 
-      if (!lns::validate_lns_name(type, req.name, &reason))
-        throw wallet_rpc_error{error_code::LNS_BAD_NAME, "Invalid LNS name '" + req.name + "': " + reason};
+      if (!ons::validate_ons_name(type, req.name, &reason))
+        throw wallet_rpc_error{error_code::ONS_BAD_NAME, "Invalid ONS name '" + req.name + "': " + reason};
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -3401,43 +3401,43 @@ namespace {
     // Decrypt value
     //
     // ---------------------------------------------------------------------------------------------
-    lns::mapping_value value = {};
+    ons::mapping_value value = {};
     value.len = req.encrypted_value.size() / 2;
     value.encrypted = true;
     oxenmq::from_hex(req.encrypted_value.begin(), req.encrypted_value.end(), value.buffer.begin());
 
     if (!value.decrypt(req.name, type))
-      throw wallet_rpc_error{error_code::LNS_VALUE_NOT_HEX, "Value decryption failure"};
+      throw wallet_rpc_error{error_code::ONS_VALUE_NOT_HEX, "Value decryption failure"};
 
     res.value = value.to_readable_value(m_wallet->nettype(), type);
     return res;
   }
 
-  LNS_ENCRYPT_VALUE::response wallet_rpc_server::invoke(LNS_ENCRYPT_VALUE::request&& req)
+  ONS_ENCRYPT_VALUE::response wallet_rpc_server::invoke(ONS_ENCRYPT_VALUE::request&& req)
   {
     require_open();
 
-    if (req.value.size() > lns::mapping_value::BUFFER_SIZE)
-      throw wallet_rpc_error{error_code::LNS_VALUE_TOO_LONG, "LNS value '" + req.value + "' is too long"};
+    if (req.value.size() > ons::mapping_value::BUFFER_SIZE)
+      throw wallet_rpc_error{error_code::ONS_VALUE_TOO_LONG, "ONS value '" + req.value + "' is too long"};
 
     std::string reason;
     std::optional<uint8_t> hf_version = m_wallet->get_hard_fork_version();
     if (!hf_version) throw wallet_rpc_error{error_code::HF_QUERY_FAILED, tools::ERR_MSG_NETWORK_VERSION_QUERY_FAILED};
 
-    lns::mapping_type type;
-    if (!lns::validate_mapping_type(req.type, *hf_version, lns::lns_tx_type::lookup, &type, &reason))
-      throw wallet_rpc_error{error_code::WRONG_LNS_TYPE, "Wrong lns type given=" + reason};
+    ons::mapping_type type;
+    if (!ons::validate_mapping_type(req.type, *hf_version, ons::ons_tx_type::lookup, &type, &reason))
+      throw wallet_rpc_error{error_code::WRONG_ONS_TYPE, "Wrong ons type given=" + reason};
 
-    if (!lns::validate_lns_name(type, req.name, &reason))
-      throw wallet_rpc_error{error_code::LNS_BAD_NAME, "Invalid LNS name '" + req.name + "': " + reason};
+    if (!ons::validate_ons_name(type, req.name, &reason))
+      throw wallet_rpc_error{error_code::ONS_BAD_NAME, "Invalid ONS name '" + req.name + "': " + reason};
 
-    lns::mapping_value value;
-    if (!lns::mapping_value::validate(m_wallet->nettype(), type, req.value, &value, &reason))
-      throw wallet_rpc_error{error_code::LNS_BAD_VALUE, "Invalid LNS value '" + req.value + "': " + reason};
+    ons::mapping_value value;
+    if (!ons::mapping_value::validate(m_wallet->nettype(), type, req.value, &value, &reason))
+      throw wallet_rpc_error{error_code::ONS_BAD_VALUE, "Invalid ONS value '" + req.value + "': " + reason};
 
-    bool old_argon2 = type == lns::mapping_type::session && *hf_version < cryptonote::network_version_16_pulse;
+    bool old_argon2 = type == ons::mapping_type::session && *hf_version < cryptonote::network_version_16_pulse;
     if (!value.encrypt(req.name, nullptr, old_argon2))
-      throw wallet_rpc_error{error_code::LNS_VALUE_ENCRYPT_FAILED, "Value encryption failure"};
+      throw wallet_rpc_error{error_code::ONS_VALUE_ENCRYPT_FAILED, "Value encryption failure"};
 
     return {oxenmq::to_hex(value.to_view())};
   }

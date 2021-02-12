@@ -211,7 +211,7 @@ namespace cryptonote
 
         if (data.type == pool_data.type && data.name_hash == pool_data.name_hash)
         {
-          LOG_PRINT_L1("New TX: " << get_transaction_hash(tx) << ", has TX: " << get_transaction_hash(pool_tx) << " from the pool that is requesting the same LNS entry already.");
+          LOG_PRINT_L1("New TX: " << get_transaction_hash(tx) << ", has TX: " << get_transaction_hash(pool_tx) << " from the pool that is requesting the same ONS entry already.");
           return true;
         }
       }

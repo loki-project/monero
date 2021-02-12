@@ -335,14 +335,14 @@ std::pair<bool, std::vector<cryptonote::rpc::GET_SERVICE_NODE_BLACKLISTED_KEY_IM
   return result;
 }
 
-std::pair<bool, std::vector<cryptonote::rpc::LNS_OWNERS_TO_NAMES::response_entry>> NodeRPCProxy::lns_owners_to_names(cryptonote::rpc::LNS_OWNERS_TO_NAMES::request const &request) const
+std::pair<bool, std::vector<cryptonote::rpc::ONS_OWNERS_TO_NAMES::response_entry>> NodeRPCProxy::ons_owners_to_names(cryptonote::rpc::ONS_OWNERS_TO_NAMES::request const &request) const
 {
-  return get_result_pair<rpc::LNS_OWNERS_TO_NAMES>(request, [](auto&& res) { return std::move(res.entries); });
+  return get_result_pair<rpc::ONS_OWNERS_TO_NAMES>(request, [](auto&& res) { return std::move(res.entries); });
 }
 
-std::pair<bool, std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry>> NodeRPCProxy::lns_names_to_owners(cryptonote::rpc::LNS_NAMES_TO_OWNERS::request const &request) const
+std::pair<bool, std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry>> NodeRPCProxy::ons_names_to_owners(cryptonote::rpc::ONS_NAMES_TO_OWNERS::request const &request) const
 {
-  return get_result_pair<rpc::LNS_NAMES_TO_OWNERS>(request, [](auto&& res) { return std::move(res.entries); });
+  return get_result_pair<rpc::ONS_NAMES_TO_OWNERS>(request, [](auto&& res) { return std::move(res.entries); });
 }
 
 std::pair<bool, cryptonote::rpc::ONS_RESOLVE_ADDRESS::response> NodeRPCProxy::ons_resolve_address(cryptonote::rpc::ONS_RESOLVE_ADDRESS::request const &request) const

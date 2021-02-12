@@ -815,23 +815,23 @@ private:
     auto get_service_nodes(std::vector<std::string> const &pubkeys) const { return m_node_rpc_proxy.get_service_nodes(pubkeys); }
     auto get_service_node_blacklisted_key_images()                  const { return m_node_rpc_proxy.get_service_node_blacklisted_key_images(); }
     std::vector<cryptonote::rpc::GET_SERVICE_NODES::response::entry> list_current_stakes();
-    auto lns_owners_to_names(cryptonote::rpc::LNS_OWNERS_TO_NAMES::request const &request) const { return m_node_rpc_proxy.lns_owners_to_names(request); }
-    auto lns_names_to_owners(cryptonote::rpc::LNS_NAMES_TO_OWNERS::request const &request) const { return m_node_rpc_proxy.lns_names_to_owners(request); }
+    auto ons_owners_to_names(cryptonote::rpc::ONS_OWNERS_TO_NAMES::request const &request) const { return m_node_rpc_proxy.ons_owners_to_names(request); }
+    auto ons_names_to_owners(cryptonote::rpc::ONS_NAMES_TO_OWNERS::request const &request) const { return m_node_rpc_proxy.ons_names_to_owners(request); }
     auto resolve_address(cryptonote::rpc::ONS_RESOLVE_ADDRESS::request const &request) const { return m_node_rpc_proxy.ons_resolve_address(request); }
 
-    struct lns_detail
+    struct ons_detail
     {
-      lns::mapping_type type;
+      ons::mapping_type type;
       std::string name;
       std::string hashed_name;
     };
-    std::unordered_map<std::string, lns_detail> lns_records_cache;
+    std::unordered_map<std::string, ons_detail> ons_records_cache;
 
-    void set_lns_cache_record(wallet2::lns_detail detail);
+    void set_ons_cache_record(wallet2::ons_detail detail);
 
-    void delete_lns_cache_record(const std::string& name);
+    void delete_ons_cache_record(const std::string& name);
 
-    std::unordered_map<std::string, lns_detail> get_lns_cache();
+    std::unordered_map<std::string, ons_detail> get_ons_cache();
 
     uint64_t get_blockchain_current_height() const { return m_light_wallet_blockchain_height ? m_light_wallet_blockchain_height : m_blockchain.size(); }
     void rescan_spent();
@@ -961,7 +961,7 @@ private:
       a & m_immutable_height;
       if(ver < 30)
         return;
-      a & lns_records_cache;
+      a & ons_records_cache;
     }
 
     /*!
@@ -1223,8 +1223,8 @@ private:
     uint64_t get_fee_quantization_mask() const;
 
     // params constructor, accumulates the burn amounts if the priority is
-    // a blink and, or a lns tx. If it is a blink TX, lns_burn_type is ignored.
-    static cryptonote::oxen_construct_tx_params construct_params(uint8_t hf_version, cryptonote::txtype tx_type, uint32_t priority, lns::mapping_type lns_burn_type = static_cast<lns::mapping_type>(0));
+    // a blink and, or a ons tx. If it is a blink TX, ons_burn_type is ignored.
+    static cryptonote::oxen_construct_tx_params construct_params(uint8_t hf_version, cryptonote::txtype tx_type, uint32_t priority, ons::mapping_type ons_burn_type = static_cast<ons::mapping_type>(0));
 
     bool is_unattended() const { return m_unattended; }
 
@@ -1391,22 +1391,22 @@ private:
     };
     request_stake_unlock_result can_request_stake_unlock(const crypto::public_key &sn_key);
 
-    // Attempts to convert the LNS type string to a mapping type (checking the current hard fork).
+    // Attempts to convert the ONS type string to a mapping type (checking the current hard fork).
     // If type isn't valid then returns std::nullopt and sets the failure reason in `reason` (if not
     // nullptr).
-    std::optional<lns::mapping_type> lns_validate_type(std::string_view type, lns::lns_tx_type lns_action, std::string *reason);
+    std::optional<ons::mapping_type> ons_validate_type(std::string_view type, ons::ons_tx_type ons_action, std::string *reason);
 
-    std::vector<pending_tx> lns_create_buy_mapping_tx(lns::mapping_type type, std::string const *owner, std::string const *backup_owner, std::string name, std::string const &value, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {});
+    std::vector<pending_tx> ons_create_buy_mapping_tx(ons::mapping_type type, std::string const *owner, std::string const *backup_owner, std::string name, std::string const &value, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {});
 
     // signature: (Optional) If set, use the signature given, otherwise by default derive the signature from the wallet spend key as an ed25519 key.
     //            The signature is derived from the hash of the previous txid blob and previous value blob of the mapping. By default this is signed using the wallet's spend key as an ed25519 keypair.
-    std::vector<pending_tx> lns_create_update_mapping_tx(lns::mapping_type type, std::string name, std::string const *value, std::string const *owner, std::string const *backup_owner, std::string const *signature, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {}, std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response = {});
+    std::vector<pending_tx> ons_create_update_mapping_tx(ons::mapping_type type, std::string name, std::string const *value, std::string const *owner, std::string const *backup_owner, std::string const *signature, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {}, std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> *response = {});
 
-    // LNS renewal (for lokinet registrations, not for session/wallet)
-    std::vector<pending_tx> lns_create_renewal_tx(lns::mapping_type type, std::string name, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {}, std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response = {});
+    // ONS renewal (for lokinet registrations, not for session/wallet)
+    std::vector<pending_tx> ons_create_renewal_tx(ons::mapping_type type, std::string name, std::string *reason, uint32_t priority = 0, uint32_t account_index = 0, std::set<uint32_t> subaddr_indices = {}, std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> *response = {});
 
-    // Generate just the signature required for putting into lns_update_mapping command in the wallet
-    bool lns_make_update_mapping_signature(lns::mapping_type type, std::string name, std::string const *value, std::string const *owner, std::string const *backup_owner, lns::generic_signature &signature, uint32_t account_index = 0, std::string *reason = nullptr);
+    // Generate just the signature required for putting into ons_update_mapping command in the wallet
+    bool ons_make_update_mapping_signature(ons::mapping_type type, std::string name, std::string const *value, std::string const *owner, std::string const *backup_owner, ons::generic_signature &signature, uint32_t account_index = 0, std::string *reason = nullptr);
 
     void freeze(size_t idx);
     void thaw(size_t idx);
@@ -1720,12 +1720,12 @@ BOOST_CLASS_VERSION(tools::wallet2::unconfirmed_transfer_details, 9)
 BOOST_CLASS_VERSION(tools::wallet2::confirmed_transfer_details, 8)
 BOOST_CLASS_VERSION(tools::wallet2::address_book_row, 18)
 BOOST_CLASS_VERSION(tools::wallet2::reserve_proof_entry, 0)
-BOOST_CLASS_VERSION(tools::wallet2::lns_detail, 1)
+BOOST_CLASS_VERSION(tools::wallet2::ons_detail, 1)
 
 namespace boost::serialization
 {
     template <class Archive>
-    void serialize(Archive &a, tools::wallet2::lns_detail &x, const unsigned int ver)
+    void serialize(Archive &a, tools::wallet2::ons_detail &x, const unsigned int ver)
     {
       a & x.type;
       a & x.name;

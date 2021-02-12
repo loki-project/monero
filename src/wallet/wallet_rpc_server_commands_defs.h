@@ -2179,22 +2179,22 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  struct LNS_BUY_MAPPING : RESTRICTED
+  struct ONS_BUY_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_buy_mapping"); }
+    static constexpr auto names() { return NAMES("ons_buy_mapping"); }
 
     static constexpr const char *description =
-R"(Buy a Loki Name System (LNS) mapping that maps a unique name to a Session ID or Lokinet address.
+R"(Buy a Loki Name System (ONS) mapping that maps a unique name to a Session ID or Lokinet address.
 
 Currently supports Session, Lokinet and Wallet registrations. Lokinet registrations can be for 1, 2, 5, or 10 years by specifying a type value of "lokinet", "lokinet_2y", "lokinet_5y", "lokinet_10y". Session registrations do not expire.
 
-The owner of the LNS entry (by default, the purchasing wallet) will be permitted to submit LNS update transactions to the Loki blockchain (for example to update a Session pubkey or the target Lokinet address). You may change the primary owner or add a backup owner in the registration and can change them later with update transactions. Owner addresses can be either Loki wallets, or generic ed25519 pubkeys (for advanced uses).
+The owner of the ONS entry (by default, the purchasing wallet) will be permitted to submit ONS update transactions to the Loki blockchain (for example to update a Session pubkey or the target Lokinet address). You may change the primary owner or add a backup owner in the registration and can change them later with update transactions. Owner addresses can be either Loki wallets, or generic ed25519 pubkeys (for advanced uses).
 
 For Session, the recommended owner or backup owner is the ed25519 public key of the user's Session ID.
 
 When specifying owners, either a wallet (sub)address or standard ed25519 public key is supported per mapping. Updating the value that a name maps to requires one of the owners to sign the update transaction. For wallets, this is signed using the (sub)address's spend key.
 
-For more information on updating and signing see the LNS_UPDATE_MAPPING documentation.)";
+For more information on updating and signing see the ONS_UPDATE_MAPPING documentation.)";
 
     struct request
     {
@@ -2231,10 +2231,10 @@ For more information on updating and signing see the LNS_UPDATE_MAPPING document
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Renew an active lokinet LNS registration
-  struct LNS_RENEW_MAPPING : RESTRICTED
+  // Renew an active lokinet ONS registration
+  struct ONS_RENEW_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_renew_mapping"); }
+    static constexpr auto names() { return NAMES("ons_renew_mapping"); }
 
     static constexpr const char *description =
 R"(Renews a Loki Name System lokinet mapping by adding to the existing expiry time.
@@ -2257,14 +2257,14 @@ The renewal can be for 1, 2, 5, or 10 years by specifying a `type` value of "lok
       KV_MAP_SERIALIZABLE
     };
 
-    using response = LNS_BUY_MAPPING::response;
+    using response = ONS_BUY_MAPPING::response;
   };
 
   OXEN_RPC_DOC_INTROSPECT
   // Update the underlying value in the name->value mapping via Loki Name Service.
-  struct LNS_UPDATE_MAPPING : RESTRICTED
+  struct ONS_UPDATE_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_update_mapping"); }
+    static constexpr auto names() { return NAMES("ons_update_mapping"); }
 
     static constexpr const char *description =
 R"(Update a Loki Name System mapping to refer to a new address or owner.
@@ -2273,7 +2273,7 @@ At least one field (value, owner, or backup owner) must be specified in the upda
 
 The existing owner (wallet address or ed25519 public key) of the mapping must be used to sign the update. If no signature is provided then the wallet's active address (or subaddress) will be used to sign the update.
 
-If signing is performed externally then you must first encrypt the `value` (if being updated), then sign a BLAKE2b hash of {encryptedvalue || owner || backup_owner || txid} (where txid is the most recent LNS update or registration transaction of this mapping; each of encrypted/owner/backup are empty strings if not being updated). For a wallet owner this is signed using the owning wallet's spend key; for a Ed25519 key this is a standard Ed25519 signature.)";
+If signing is performed externally then you must first encrypt the `value` (if being updated), then sign a BLAKE2b hash of {encryptedvalue || owner || backup_owner || txid} (where txid is the most recent ONS update or registration transaction of this mapping; each of encrypted/owner/backup are empty strings if not being updated). For a wallet owner this is signed using the owning wallet's spend key; for a Ed25519 key this is a standard Ed25519 signature.)";
 
     struct request
     {
@@ -2312,14 +2312,14 @@ If signing is performed externally then you must first encrypt the `value` (if b
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  struct LNS_MAKE_UPDATE_SIGNATURE : RESTRICTED
+  struct ONS_MAKE_UPDATE_SIGNATURE : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_make_update_mapping_signature"); }
+    static constexpr auto names() { return NAMES("ons_make_update_mapping_signature"); }
 
   static constexpr const char *description =
-R"(Generate the signature necessary for updating the requested record using the wallet's active [sub]address's spend key. The signature is only valid if the queried wallet is one of the owners of the LNS record.
+R"(Generate the signature necessary for updating the requested record using the wallet's active [sub]address's spend key. The signature is only valid if the queried wallet is one of the owners of the ONS record.
 
-This command is only required if the open wallet is one of the owners of a LNS record but wants the update transaction to occur via another non-owning wallet. By default, if no signature is specified to the update transaction, the open wallet is assumed the owner and it's active [sub]address's spend key will automatically be used.)";
+This command is only required if the open wallet is one of the owners of a ONS record but wants the update transaction to occur via another non-owning wallet. By default, if no signature is specified to the update transaction, the open wallet is assumed the owner and it's active [sub]address's spend key will automatically be used.)";
 
     struct request
     {
@@ -2335,17 +2335,17 @@ This command is only required if the open wallet is one of the owners of a LNS r
 
     struct response
     {
-      std::string signature; // A signature valid for using in LNS to update an underlying mapping.
+      std::string signature; // A signature valid for using in ONS to update an underlying mapping.
 
       KV_MAP_SERIALIZABLE
     };
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS name, upon validating it, generates the hash and returns the base64 representation of the hash suitable for use in the daemon LNS name queries.
-  struct LNS_HASH_NAME : RPC_COMMAND
+  // Takes a ONS name, upon validating it, generates the hash and returns the base64 representation of the hash suitable for use in the daemon ONS name queries.
+  struct ONS_HASH_NAME : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_hash_name"); }
+    static constexpr auto names() { return NAMES("ons_hash_name"); }
 
     struct request
     {
@@ -2364,12 +2364,12 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Returns a list of known, plain-text LNS names along with record details for names that this
-  // wallet knows about.  This can optionally decrypt the LNS value as well, or else just return the
+  // Returns a list of known, plain-text ONS names along with record details for names that this
+  // wallet knows about.  This can optionally decrypt the ONS value as well, or else just return the
   // encrypted value.
-  struct LNS_KNOWN_NAMES : RPC_COMMAND
+  struct ONS_KNOWN_NAMES : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_known_names"); }
+    static constexpr auto names() { return NAMES("ons_known_names"); }
 
     struct known_record
     {
@@ -2403,15 +2403,15 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Adds one or more names to the persistent LNS wallet cache of known names (i.e. for names that
+  // Adds one or more names to the persistent ONS wallet cache of known names (i.e. for names that
   // are owned by this wallet that aren't currently in the cache).
-  struct LNS_ADD_KNOWN_NAMES : RPC_COMMAND
+  struct ONS_ADD_KNOWN_NAMES : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_add_known_names"); }
+    static constexpr auto names() { return NAMES("ons_add_known_names"); }
 
     struct record
     {
-      std::string type; // The LNS type (mandatory); currently support values are: "session", "lokinet"
+      std::string type; // The ONS type (mandatory); currently support values are: "session", "lokinet"
       std::string name; // The (unhashed) name of the record
 
       KV_MAP_SERIALIZABLE
@@ -2428,14 +2428,14 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS encrypted value and encrypts the mapping value using the LNS name.
-  struct LNS_ENCRYPT_VALUE : RPC_COMMAND
+  // Takes a ONS encrypted value and encrypts the mapping value using the ONS name.
+  struct ONS_ENCRYPT_VALUE : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_encrypt_value"); }
+    static constexpr auto names() { return NAMES("ons_encrypt_value"); }
 
     struct request
     {
-      std::string name;            // The LNS name with which to encrypt the value.
+      std::string name;            // The ONS name with which to encrypt the value.
       std::string type;            // The mapping type: "session" or "lokinet".
       std::string value;           // The value to be encrypted.
 
@@ -2451,14 +2451,14 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS encrypted value and decrypts the mapping value using the LNS name.
-  struct LNS_DECRYPT_VALUE : RPC_COMMAND
+  // Takes a ONS encrypted value and decrypts the mapping value using the ONS name.
+  struct ONS_DECRYPT_VALUE : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_decrypt_value"); }
+    static constexpr auto names() { return NAMES("ons_decrypt_value"); }
 
     struct request
     {
-      std::string name;            // The LNS name of the given encrypted value.
+      std::string name;            // The ONS name of the given encrypted value.
       std::string type;            // The mapping type: "session" or "lokinet".
       std::string encrypted_value; // The encrypted value represented in hex.
 
@@ -2567,15 +2567,15 @@ This command is only required if the open wallet is one of the owners of a LNS r
     SET_DAEMON,
     SET_LOG_LEVEL,
     SET_LOG_CATEGORIES,
-    LNS_BUY_MAPPING,
-    LNS_UPDATE_MAPPING,
-    LNS_RENEW_MAPPING,
-    LNS_MAKE_UPDATE_SIGNATURE,
-    LNS_HASH_NAME,
-    LNS_KNOWN_NAMES,
-    LNS_ADD_KNOWN_NAMES,
-    LNS_DECRYPT_VALUE,
-    LNS_ENCRYPT_VALUE
+    ONS_BUY_MAPPING,
+    ONS_UPDATE_MAPPING,
+    ONS_RENEW_MAPPING,
+    ONS_MAKE_UPDATE_SIGNATURE,
+    ONS_HASH_NAME,
+    ONS_KNOWN_NAMES,
+    ONS_ADD_KNOWN_NAMES,
+    ONS_DECRYPT_VALUE,
+    ONS_ENCRYPT_VALUE
   >;
 
 }

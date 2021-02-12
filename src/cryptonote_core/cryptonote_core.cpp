@@ -658,7 +658,7 @@ namespace cryptonote
       return false;
     }
 
-    auto lns_db_file_path = folder / "lns.db";
+    auto ons_db_file_path = folder / "ons.db";
 
     folder /= db->get_db_name();
     MGINFO("Loading blockchain from folder " << folder << " ...");
@@ -677,7 +677,7 @@ namespace cryptonote
         MERROR("Failed to remove data file in " << folder);
         return false;
       }
-      fs::remove(lns_db_file_path);
+      fs::remove(ons_db_file_path);
     }
 #endif
 
@@ -828,13 +828,13 @@ namespace cryptonote
     // Checkpoints
     m_checkpoints_path = m_config_folder / fs::u8path(JSON_HASH_FILE_NAME);
 
-    sqlite3 *lns_db = lns::init_oxen_name_system(lns_db_file_path, db->is_read_only());
-    if (!lns_db) return false;
+    sqlite3 *ons_db = ons::init_oxen_name_system(ons_db_file_path, db->is_read_only());
+    if (!ons_db) return false;
 
     init_oxenmq(vm);
 
     const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);
-    r = m_blockchain_storage.init(db.release(), lns_db, m_nettype, m_offline, regtest ? &regtest_test_options : test_options, fixed_difficulty, get_checkpoints);
+    r = m_blockchain_storage.init(db.release(), ons_db, m_nettype, m_offline, regtest ? &regtest_test_options : test_options, fixed_difficulty, get_checkpoints);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize blockchain storage");
 
     r = m_mempool.init(max_txpool_weight);

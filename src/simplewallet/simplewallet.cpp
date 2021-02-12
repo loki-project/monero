@@ -255,14 +255,14 @@ namespace
   const char* USAGE_REQUEST_STAKE_UNLOCK("request_stake_unlock <service_node_pubkey>");
   const char* USAGE_PRINT_LOCKED_STAKES("print_locked_stakes");
 
-  const char* USAGE_LNS_BUY_MAPPING("lns_buy_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=session|lokinet|lokinet_2y|lokinet_5y|lokinet_10y] [owner=<value>] [backup_owner=<value>] <name> <value>");
-  const char* USAGE_LNS_RENEW_MAPPING("lns_renew_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=lokinet|lokinet_2y|lokinet_5y|lokinet_10y] <name>");
-  const char* USAGE_LNS_UPDATE_MAPPING("lns_update_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=session|lokinet] [owner=<value>] [backup_owner=<value>] [value=<lns_value>] [signature=<hex_signature>] <name>");
+  const char* USAGE_ONS_BUY_MAPPING("ons_buy_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=session|lokinet|lokinet_2y|lokinet_5y|lokinet_10y] [owner=<value>] [backup_owner=<value>] <name> <value>");
+  const char* USAGE_ONS_RENEW_MAPPING("ons_renew_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=lokinet|lokinet_2y|lokinet_5y|lokinet_10y] <name>");
+  const char* USAGE_ONS_UPDATE_MAPPING("ons_update_mapping [index=<N1>[,<N2>,...]] [<priority>] [type=session|lokinet] [owner=<value>] [backup_owner=<value>] [value=<ons_value>] [signature=<hex_signature>] <name>");
 
-  const char* USAGE_LNS_ENCRYPT("lns_encrypt [type=session|lokinet] <name> <value>");
-  const char* USAGE_LNS_MAKE_UPDATE_MAPPING_SIGNATURE("lns_make_update_mapping_signature [type=session|lokinet] [owner=<value>] [backup_owner=<value>] [value=<encrypted_lns_value>] <name>");
-  const char* USAGE_LNS_PRINT_OWNERS_TO_NAMES("lns_print_owners_to_names [<owner> ...]");
-  const char* USAGE_LNS_PRINT_NAME_TO_OWNERS("lns_print_name_to_owners [type=session|lokinet] <name> [<name> ...]");
+  const char* USAGE_ONS_ENCRYPT("ons_encrypt [type=session|lokinet] <name> <value>");
+  const char* USAGE_ONS_MAKE_UPDATE_MAPPING_SIGNATURE("ons_make_update_mapping_signature [type=session|lokinet] [owner=<value>] [backup_owner=<value>] [value=<encrypted_ons_value>] <name>");
+  const char* USAGE_ONS_PRINT_OWNERS_TO_NAMES("ons_print_owners_to_names [<owner> ...]");
+  const char* USAGE_ONS_PRINT_NAME_TO_OWNERS("ons_print_name_to_owners [type=session|lokinet] <name> [<name> ...]");
 
 #if defined (OXEN_ENABLE_INTEGRATION_TEST_HOOKS)
   std::string input_line(const std::string &prompt, bool yesno = false)
@@ -3149,40 +3149,40 @@ Pending or Failed: "failed"|"pending",  "out", Lock, Checkpointed, Time, Amount*
                            tr(USAGE_PRINT_LOCKED_STAKES),
                            tr("Print stakes currently locked on the Service Node network"));
 
-  m_cmd_binder.set_handler("lns_buy_mapping",
-                           [this](const auto& x) { return lns_buy_mapping(x); },
-                           tr(USAGE_LNS_BUY_MAPPING),
-                           tr(tools::wallet_rpc::LNS_BUY_MAPPING::description));
+  m_cmd_binder.set_handler("ons_buy_mapping",
+                           [this](const auto& x) { return ons_buy_mapping(x); },
+                           tr(USAGE_ONS_BUY_MAPPING),
+                           tr(tools::wallet_rpc::ONS_BUY_MAPPING::description));
 
-  m_cmd_binder.set_handler("lns_renew_mapping",
-                           [this](const auto& x) { return lns_renew_mapping(x); },
-                           tr(USAGE_LNS_RENEW_MAPPING),
-                           tr(tools::wallet_rpc::LNS_RENEW_MAPPING::description));
+  m_cmd_binder.set_handler("ons_renew_mapping",
+                           [this](const auto& x) { return ons_renew_mapping(x); },
+                           tr(USAGE_ONS_RENEW_MAPPING),
+                           tr(tools::wallet_rpc::ONS_RENEW_MAPPING::description));
 
-  m_cmd_binder.set_handler("lns_update_mapping",
-                           [this](const auto& x) { return lns_update_mapping(x); },
-                           tr(USAGE_LNS_UPDATE_MAPPING),
-                           tr(tools::wallet_rpc::LNS_UPDATE_MAPPING::description));
+  m_cmd_binder.set_handler("ons_update_mapping",
+                           [this](const auto& x) { return ons_update_mapping(x); },
+                           tr(USAGE_ONS_UPDATE_MAPPING),
+                           tr(tools::wallet_rpc::ONS_UPDATE_MAPPING::description));
 
-  m_cmd_binder.set_handler("lns_encrypt",
-                           [this](const auto& x) { return lns_encrypt(x); },
-                           tr(USAGE_LNS_ENCRYPT),
-                           tr("Encrypts a LNS mapping value with a given name; primarily intended for use with external mapping update signing"));
+  m_cmd_binder.set_handler("ons_encrypt",
+                           [this](const auto& x) { return ons_encrypt(x); },
+                           tr(USAGE_ONS_ENCRYPT),
+                           tr("Encrypts a ONS mapping value with a given name; primarily intended for use with external mapping update signing"));
 
-  m_cmd_binder.set_handler("lns_print_owners_to_names",
-                           [this](const auto& x) { return lns_print_owners_to_names(x); },
-                           tr(USAGE_LNS_PRINT_OWNERS_TO_NAMES),
+  m_cmd_binder.set_handler("ons_print_owners_to_names",
+                           [this](const auto& x) { return ons_print_owners_to_names(x); },
+                           tr(USAGE_ONS_PRINT_OWNERS_TO_NAMES),
                            tr("Query the Oxen Name Service names that the keys have purchased. If no keys are specified, it defaults to the current wallet."));
 
-  m_cmd_binder.set_handler("lns_print_name_to_owners",
-                           [this](const auto& x) { return lns_print_name_to_owners(x); },
-                           tr(USAGE_LNS_PRINT_NAME_TO_OWNERS),
+  m_cmd_binder.set_handler("ons_print_name_to_owners",
+                           [this](const auto& x) { return ons_print_name_to_owners(x); },
+                           tr(USAGE_ONS_PRINT_NAME_TO_OWNERS),
                            tr("Query the ed25519 public keys that own the Oxen Name System names."));
 
-  m_cmd_binder.set_handler("lns_make_update_mapping_signature",
-                           [this](const auto& x) { return lns_make_update_mapping_signature(x); },
-                           tr(USAGE_LNS_MAKE_UPDATE_MAPPING_SIGNATURE),
-                           tr(tools::wallet_rpc::LNS_MAKE_UPDATE_SIGNATURE::description));
+  m_cmd_binder.set_handler("ons_make_update_mapping_signature",
+                           [this](const auto& x) { return ons_make_update_mapping_signature(x); },
+                           tr(USAGE_ONS_MAKE_UPDATE_MAPPING_SIGNATURE),
+                           tr(tools::wallet_rpc::ONS_MAKE_UPDATE_SIGNATURE::description));
 }
 
 simple_wallet::~simple_wallet()
@@ -6438,16 +6438,16 @@ std::array<std::string, sizeof...(Prefixes)> eat_named_arguments(std::vector<std
 }
 
 // Parse a user-provided typestring value; if not provided, guess from the provided name and value.
-static std::optional<lns::mapping_type> guess_lns_type(tools::wallet2& wallet, std::string_view typestr, std::string_view name, std::string_view value)
+static std::optional<ons::mapping_type> guess_ons_type(tools::wallet2& wallet, std::string_view typestr, std::string_view name, std::string_view value)
 {
   if (typestr.empty())
   {
     if (tools::ends_with(name, ".loki") && (tools::ends_with(value, ".loki") || value.empty()))
-      return lns::mapping_type::lokinet;
-    if (!tools::ends_with(name, ".loki") && tools::starts_with(value, "05") && value.length() == 2*lns::SESSION_PUBLIC_KEY_BINARY_LENGTH)
-      return lns::mapping_type::session;
+      return ons::mapping_type::lokinet;
+    if (!tools::ends_with(name, ".loki") && tools::starts_with(value, "05") && value.length() == 2*ons::SESSION_PUBLIC_KEY_BINARY_LENGTH)
+      return ons::mapping_type::session;
 
-    fail_msg_writer() << tr("Could not infer LNS type from name/value; trying using the type= argument or see `help' for more details");
+    fail_msg_writer() << tr("Could not infer ONS type from name/value; trying using the type= argument or see `help' for more details");
     return std::nullopt;
   }
 
@@ -6459,7 +6459,7 @@ static std::optional<lns::mapping_type> guess_lns_type(tools::wallet2& wallet, s
   }
 
   std::string reason;
-  if (lns::mapping_type type; lns::validate_mapping_type(typestr, *hf_version, lns::lns_tx_type::buy, &type, &reason))
+  if (ons::mapping_type type; ons::validate_mapping_type(typestr, *hf_version, ons::ons_tx_type::buy, &type, &reason))
     return type;
 
   fail_msg_writer() << reason;
@@ -6467,32 +6467,32 @@ static std::optional<lns::mapping_type> guess_lns_type(tools::wallet2& wallet, s
 }
 
 //----------------------------------------------------------------------------------------------------
-static constexpr auto LNS_OWNER_PREFIX        = "owner="sv;
-static constexpr auto LNS_BACKUP_OWNER_PREFIX = "backup_owner="sv;
-static constexpr auto LNS_TYPE_PREFIX         = "type="sv;
-static constexpr auto LNS_VALUE_PREFIX        = "value="sv;
-static constexpr auto LNS_SIGNATURE_PREFIX    = "signature="sv;
+static constexpr auto ONS_OWNER_PREFIX        = "owner="sv;
+static constexpr auto ONS_BACKUP_OWNER_PREFIX = "backup_owner="sv;
+static constexpr auto ONS_TYPE_PREFIX         = "type="sv;
+static constexpr auto ONS_VALUE_PREFIX        = "value="sv;
+static constexpr auto ONS_SIGNATURE_PREFIX    = "signature="sv;
 
 static char constexpr NULL_STR[] = "(none)";
 
-bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
+bool simple_wallet::ons_buy_mapping(std::vector<std::string> args)
 {
   uint32_t priority = 0;
   std::set<uint32_t> subaddr_indices  = {};
   if (!parse_subaddr_indices_and_priority(*m_wallet, args, subaddr_indices, priority, m_current_subaddress_account)) return false;
 
-  auto [owner, backup_owner, typestr] = eat_named_arguments(args, LNS_OWNER_PREFIX, LNS_BACKUP_OWNER_PREFIX, LNS_TYPE_PREFIX);
+  auto [owner, backup_owner, typestr] = eat_named_arguments(args, ONS_OWNER_PREFIX, ONS_BACKUP_OWNER_PREFIX, ONS_TYPE_PREFIX);
 
   if (args.size() != 2)
   {
-    PRINT_USAGE(USAGE_LNS_BUY_MAPPING);
+    PRINT_USAGE(USAGE_ONS_BUY_MAPPING);
     return true;
   }
 
   std::string const &name  = args[0];
   std::string const &value = args[1];
 
-  std::optional<lns::mapping_type> type = guess_lns_type(*m_wallet, typestr, name, value);
+  std::optional<ons::mapping_type> type = guess_ons_type(*m_wallet, typestr, name, value);
   if (!type) return false;
 
   SCOPED_WALLET_UNLOCK();
@@ -6501,7 +6501,7 @@ bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
 
   try
   {
-    ptx_vector = m_wallet->lns_create_buy_mapping_tx(*type,
+    ptx_vector = m_wallet->ons_create_buy_mapping_tx(*type,
                                                      owner.size() ? &owner : nullptr,
                                                      backup_owner.size() ? &backup_owner : nullptr,
                                                      name,
@@ -6524,7 +6524,7 @@ bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
     dsts.push_back(info);
 
     std::cout << std::endl << tr("Buying Oxen Name System Record") << std::endl << std::endl;
-    if (*type == lns::mapping_type::session)
+    if (*type == ons::mapping_type::session)
       std::cout << boost::format(tr("Session Name: %s")) % name << std::endl;
     else if (*type == ons::mapping_type::wallet)
       std::cout << boost::format(tr("Wallet Name:  %s")) % name << std::endl;
@@ -6536,7 +6536,7 @@ bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
           *type == ons::mapping_type::lokinet_5years ? 5 :
           *type == ons::mapping_type::lokinet_2years ? 2 :
           1;
-      int blocks = BLOCKS_EXPECTED_IN_DAYS(years * lns::REGISTRATION_YEAR_DAYS);
+      int blocks = BLOCKS_EXPECTED_IN_DAYS(years * ons::REGISTRATION_YEAR_DAYS);
       std::cout << boost::format(tr("Registration: %d years (%d blocks)")) % years % blocks << "\n";
     }
     else
@@ -6559,7 +6559,7 @@ bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
       *type,
       name,
       name_hash_str};
-    m_wallet->set_lns_cache_record(detail);
+    m_wallet->set_ons_cache_record(detail);
   }
   catch (const std::exception &e)
   {
@@ -6576,32 +6576,32 @@ bool simple_wallet::lns_buy_mapping(std::vector<std::string> args)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_renew_mapping(std::vector<std::string> args)
+bool simple_wallet::ons_renew_mapping(std::vector<std::string> args)
 {
   uint32_t priority = 0;
   std::set<uint32_t> subaddr_indices  = {};
   if (!parse_subaddr_indices_and_priority(*m_wallet, args, subaddr_indices, priority, m_current_subaddress_account)) return false;
 
-  std::string typestr = eat_named_argument(args, LNS_TYPE_PREFIX);
+  std::string typestr = eat_named_argument(args, ONS_TYPE_PREFIX);
   if (args.empty())
   {
-    PRINT_USAGE(USAGE_LNS_RENEW_MAPPING);
+    PRINT_USAGE(USAGE_ONS_RENEW_MAPPING);
     return false;
   }
   std::string const &name = args[0];
 
-  lns::mapping_type type;
-  if (auto t = guess_lns_type(*m_wallet, typestr, name, ""))
+  ons::mapping_type type;
+  if (auto t = guess_ons_type(*m_wallet, typestr, name, ""))
     type = *t;
   else return false;
 
   SCOPED_WALLET_UNLOCK();
   std::string reason;
   std::vector<tools::wallet2::pending_tx> ptx_vector;
-  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
+  std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> response;
   try
   {
-    ptx_vector = m_wallet->lns_create_renewal_tx(
+    ptx_vector = m_wallet->ons_create_renewal_tx(
         type,
         name,
         &reason,
@@ -6622,16 +6622,16 @@ bool simple_wallet::lns_renew_mapping(std::vector<std::string> args)
     dsts.push_back(info);
 
     std::cout << "\n" << tr("Renew Oxen Name System Record") << "\n\n";
-    if (lns::is_lokinet_type(type))
+    if (ons::is_lokinet_type(type))
       std::cout << boost::format(tr("Lokinet Name:  %s")) % name << "\n";
     else
       std::cout << boost::format(tr("Name:          %s")) % name << "\n";
 
     int years = 1;
-    if (type == lns::mapping_type::lokinet_2years) years = 2;
-    else if (type == lns::mapping_type::lokinet_5years) years = 5;
-    else if (type == lns::mapping_type::lokinet_10years) years = 10;
-    int blocks = BLOCKS_EXPECTED_IN_DAYS(years * lns::REGISTRATION_YEAR_DAYS);
+    if (type == ons::mapping_type::lokinet_2years) years = 2;
+    else if (type == ons::mapping_type::lokinet_5years) years = 5;
+    else if (type == ons::mapping_type::lokinet_10years) years = 10;
+    int blocks = BLOCKS_EXPECTED_IN_DAYS(years * ons::REGISTRATION_YEAR_DAYS);
     std::cout << boost::format(tr("Renewal years: %d (%d blocks)")) % years % blocks << "\n";
     std::cout << boost::format(tr("New expiry:    Block %d")) % (*response[0].expiration_height + blocks) << "\n";
     std::cout << std::flush;
@@ -6655,7 +6655,7 @@ bool simple_wallet::lns_renew_mapping(std::vector<std::string> args)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
+bool simple_wallet::ons_update_mapping(std::vector<std::string> args)
 {
   uint32_t priority = 0;
   std::set<uint32_t> subaddr_indices  = {};
@@ -6663,27 +6663,27 @@ bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
 
 
   auto [owner, backup_owner, value, signature, typestr] =
-    eat_named_arguments(args, LNS_OWNER_PREFIX, LNS_BACKUP_OWNER_PREFIX, LNS_VALUE_PREFIX, LNS_SIGNATURE_PREFIX, LNS_TYPE_PREFIX);
+    eat_named_arguments(args, ONS_OWNER_PREFIX, ONS_BACKUP_OWNER_PREFIX, ONS_VALUE_PREFIX, ONS_SIGNATURE_PREFIX, ONS_TYPE_PREFIX);
 
   if (args.empty())
   {
-    PRINT_USAGE(USAGE_LNS_UPDATE_MAPPING);
+    PRINT_USAGE(USAGE_ONS_UPDATE_MAPPING);
     return false;
   }
   std::string const &name = args[0];
 
-  lns::mapping_type type;
-  if (auto t = guess_lns_type(*m_wallet, typestr, name, value))
+  ons::mapping_type type;
+  if (auto t = guess_ons_type(*m_wallet, typestr, name, value))
     type = *t;
   else return false;
 
   SCOPED_WALLET_UNLOCK();
   std::string reason;
   std::vector<tools::wallet2::pending_tx> ptx_vector;
-  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
+  std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> response;
   try
   {
-    ptx_vector = m_wallet->lns_create_update_mapping_tx(type,
+    ptx_vector = m_wallet->ons_create_update_mapping_tx(type,
                                                         name,
                                                         value.size() ? &value : nullptr,
                                                         owner.size() ? &owner : nullptr,
@@ -6701,14 +6701,14 @@ bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
     }
 
     auto& enc_hex = response[0].encrypted_value;
-    if (!oxenmq::is_hex(enc_hex) || enc_hex.size() % 2 != 0 || enc_hex.size() > 2*lns::mapping_value::BUFFER_SIZE)
+    if (!oxenmq::is_hex(enc_hex) || enc_hex.size() % 2 != 0 || enc_hex.size() > 2*ons::mapping_value::BUFFER_SIZE)
     {
-      LOG_ERROR("invalid LNS data returned from oxend");
-      fail_msg_writer() << tr("invalid LNS data returned from oxend");
+      LOG_ERROR("invalid ONS data returned from oxend");
+      fail_msg_writer() << tr("invalid ONS data returned from oxend");
       return true;
     }
 
-    lns::mapping_value mval{};
+    ons::mapping_value mval{};
     mval.len = enc_hex.size() / 2;
     mval.encrypted = true;
     oxenmq::from_hex(enc_hex.begin(), enc_hex.end(), mval.buffer.begin());
@@ -6726,9 +6726,9 @@ bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
     dsts.push_back(info);
 
     std::cout << std::endl << tr("Updating Oxen Name System Record") << std::endl << std::endl;
-    if (type == lns::mapping_type::session)
+    if (type == ons::mapping_type::session)
       std::cout << boost::format(tr("Session Name:     %s")) % name << std::endl;
-    else if (lns::is_lokinet_type(type))
+    else if (ons::is_lokinet_type(type))
       std::cout << boost::format(tr("Lokinet Name:     %s")) % name << std::endl;
     else if (type == ons::mapping_type::wallet)
       std::cout << boost::format(tr("Wallet Name:     %s")) % name << std::endl;
@@ -6758,14 +6758,14 @@ bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
     if (!confirm_and_send_tx(dsts, ptx_vector, false /*blink*/))
       return false;
 
-    // Save the updated LNS record to the wallet cache
-    std::string name_hash_str = lns::name_to_base64_hash(name);
-    m_wallet->delete_lns_cache_record(name_hash_str);
-    tools::wallet2::lns_detail detail = {
+    // Save the updated ONS record to the wallet cache
+    std::string name_hash_str = ons::name_to_base64_hash(name);
+    m_wallet->delete_ons_cache_record(name_hash_str);
+    tools::wallet2::ons_detail detail = {
       type,
       name,
       name_hash_str};
-    m_wallet->set_lns_cache_record(detail);
+    m_wallet->set_ons_cache_record(detail);
 
   }
   catch (const std::exception &e)
@@ -6783,26 +6783,26 @@ bool simple_wallet::lns_update_mapping(std::vector<std::string> args)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_encrypt(std::vector<std::string> args)
+bool simple_wallet::ons_encrypt(std::vector<std::string> args)
 {
-  std::string typestr = eat_named_argument(args, LNS_TYPE_PREFIX);
+  std::string typestr = eat_named_argument(args, ONS_TYPE_PREFIX);
 
   if (args.size() != 2)
   {
-    PRINT_USAGE(USAGE_LNS_ENCRYPT);
+    PRINT_USAGE(USAGE_ONS_ENCRYPT);
     return false;
   }
   const auto& name = args[0];
   const auto& value = args[1];
 
-  lns::mapping_type type;
-  if (auto t = guess_lns_type(*m_wallet, typestr, name, value))
+  ons::mapping_type type;
+  if (auto t = guess_ons_type(*m_wallet, typestr, name, value))
     type = *t;
   else return false;
 
-  if (value.size() > lns::mapping_value::BUFFER_SIZE)
+  if (value.size() > ons::mapping_value::BUFFER_SIZE)
   {
-    fail_msg_writer() << "LNS value '" << value << "' is too long";
+    fail_msg_writer() << "ONS value '" << value << "' is too long";
     return false;
   }
 
@@ -6814,20 +6814,20 @@ bool simple_wallet::lns_encrypt(std::vector<std::string> args)
     return false;
   }
 
-  if (!lns::validate_lns_name(type, name, &reason))
+  if (!ons::validate_ons_name(type, name, &reason))
   {
-    tools::fail_msg_writer() << "Invalid LNS name '" << name << "': " << reason;
+    tools::fail_msg_writer() << "Invalid ONS name '" << name << "': " << reason;
     return false;
   }
 
-  lns::mapping_value mval;
-  if (!lns::mapping_value::validate(m_wallet->nettype(), type, value, &mval, &reason))
+  ons::mapping_value mval;
+  if (!ons::mapping_value::validate(m_wallet->nettype(), type, value, &mval, &reason))
   {
-    tools::fail_msg_writer() << "Invalid LNS value '" << value << "': " << reason;
+    tools::fail_msg_writer() << "Invalid ONS value '" << value << "': " << reason;
     return false;
   }
 
-  bool old_argon2 = type == lns::mapping_type::session && *hf_version < cryptonote::network_version_16_pulse;
+  bool old_argon2 = type == ons::mapping_type::session && *hf_version < cryptonote::network_version_16_pulse;
   if (!mval.encrypt(name, nullptr, old_argon2))
   {
     tools::fail_msg_writer() << "Value encryption failed";
@@ -6838,25 +6838,25 @@ bool simple_wallet::lns_encrypt(std::vector<std::string> args)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_make_update_mapping_signature(std::vector<std::string> args)
+bool simple_wallet::ons_make_update_mapping_signature(std::vector<std::string> args)
 {
   if (!try_connect_to_daemon())
     return true;
 
   auto [owner, backup_owner, value, typestr] =
-    eat_named_arguments(args, LNS_OWNER_PREFIX, LNS_BACKUP_OWNER_PREFIX, LNS_VALUE_PREFIX, LNS_TYPE_PREFIX);
+    eat_named_arguments(args, ONS_OWNER_PREFIX, ONS_BACKUP_OWNER_PREFIX, ONS_VALUE_PREFIX, ONS_TYPE_PREFIX);
 
   if (args.empty())
   {
-    PRINT_USAGE(USAGE_LNS_MAKE_UPDATE_MAPPING_SIGNATURE);
+    PRINT_USAGE(USAGE_ONS_MAKE_UPDATE_MAPPING_SIGNATURE);
     return false;
   }
 
   std::string const &name = args[0];
   SCOPED_WALLET_UNLOCK();
-  lns::generic_signature signature_binary;
+  ons::generic_signature signature_binary;
   std::string reason;
-  if (m_wallet->lns_make_update_mapping_signature(lns::mapping_type::session,
+  if (m_wallet->ons_make_update_mapping_signature(ons::mapping_type::session,
                                                   name,
                                                   value.size() ? &value : nullptr,
                                                   owner.size() ? &owner : nullptr,
@@ -6871,21 +6871,21 @@ bool simple_wallet::lns_make_update_mapping_signature(std::vector<std::string> a
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
+bool simple_wallet::ons_print_name_to_owners(std::vector<std::string> args)
 {
   if (!try_connect_to_daemon())
     return false;
 
   if (args.empty())
   {
-    PRINT_USAGE(USAGE_LNS_PRINT_NAME_TO_OWNERS);
+    PRINT_USAGE(USAGE_ONS_PRINT_NAME_TO_OWNERS);
     return true;
   }
 
-  std::string typestr = eat_named_argument(args, LNS_TYPE_PREFIX);
+  std::string typestr = eat_named_argument(args, ONS_TYPE_PREFIX);
 
   std::vector<uint16_t> requested_types;
-  // Parse LNS Types
+  // Parse ONS Types
   if (!typestr.empty()) {
     auto hf_version = m_wallet->get_hard_fork_version();
     if (!hf_version)
@@ -6896,14 +6896,14 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
 
     for (auto type : tools::split(typestr, ","))
     {
-      lns::mapping_type mapping_type;
+      ons::mapping_type mapping_type;
       std::string reason;
-      if (!lns::validate_mapping_type(type, *hf_version, lns::lns_tx_type::lookup, &mapping_type, &reason))
+      if (!ons::validate_mapping_type(type, *hf_version, ons::ons_tx_type::lookup, &mapping_type, &reason))
       {
         fail_msg_writer() << reason;
         return false;
       }
-      requested_types.push_back(lns::db_mapping_type(mapping_type));
+      requested_types.push_back(ons::db_mapping_type(mapping_type));
     }
   }
 
@@ -6915,27 +6915,27 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
       fail_msg_writer() << tools::ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
       return false;
     }
-    auto all_types = lns::all_mapping_types(*hf_version);
-    std::transform(all_types.begin(), all_types.end(), std::back_inserter(requested_types), lns::db_mapping_type);
+    auto all_types = ons::all_mapping_types(*hf_version);
+    std::transform(all_types.begin(), all_types.end(), std::back_inserter(requested_types), ons::db_mapping_type);
   }
 
   if (args.empty())
   {
-    PRINT_USAGE(USAGE_LNS_PRINT_NAME_TO_OWNERS);
+    PRINT_USAGE(USAGE_ONS_PRINT_NAME_TO_OWNERS);
     return true;
   }
 
-  rpc::LNS_NAMES_TO_OWNERS::request request = {};
+  rpc::ONS_NAMES_TO_OWNERS::request request = {};
   for (auto& name : args)
   {
     name = tools::lowercase_ascii_string(std::move(name));
-    request.entries.push_back({lns::name_to_base64_hash(name), requested_types});
+    request.entries.push_back({ons::name_to_base64_hash(name), requested_types});
   }
 
-  auto [success, response] = m_wallet->lns_names_to_owners(request);
+  auto [success, response] = m_wallet->ons_names_to_owners(request);
   if (!success)
   {
-    fail_msg_writer() << "Connection to daemon failed when requesting LNS owners";
+    fail_msg_writer() << "Connection to daemon failed when requesting ONS owners";
     return false;
   }
 
@@ -6943,9 +6943,9 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
   for (auto const &mapping : response)
   {
     auto& enc_hex = mapping.encrypted_value;
-    if (mapping.entry_index >= args.size() || !oxenmq::is_hex(enc_hex) || enc_hex.size() % 2 != 0 || enc_hex.size() > 2*lns::mapping_value::BUFFER_SIZE)
+    if (mapping.entry_index >= args.size() || !oxenmq::is_hex(enc_hex) || enc_hex.size() % 2 != 0 || enc_hex.size() > 2*ons::mapping_value::BUFFER_SIZE)
     {
-      fail_msg_writer() << "Received invalid LNS mapping data from oxend";
+      fail_msg_writer() << "Received invalid ONS mapping data from oxend";
       return false;
     }
 
@@ -6955,7 +6955,7 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
     last_index = mapping.entry_index;
 
     const auto& name = args[mapping.entry_index];
-    lns::mapping_value value{};
+    ons::mapping_value value{};
     value.len = enc_hex.size() / 2;
     value.encrypted = true;
     oxenmq::from_hex(enc_hex.begin(), enc_hex.end(), value.buffer.begin());
@@ -6969,7 +6969,7 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
     auto writer = tools::msg_writer();
     writer
       << "Name: " << name
-      << "\n    Type: " << static_cast<lns::mapping_type>(mapping.type)
+      << "\n    Type: " << static_cast<ons::mapping_type>(mapping.type)
       << "\n    Value: " << value.to_readable_value(m_wallet->nettype(), mapping.type)
       << "\n    Owner: " << mapping.owner;
     if (mapping.backup_owner) writer
@@ -6985,10 +6985,10 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
 
     tools::wallet2::ons_detail detail =
     {
-      static_cast<lns::mapping_type>(mapping.type),
+      static_cast<ons::mapping_type>(mapping.type),
       name,
       request.entries[0].name_hash};
-    m_wallet->set_lns_cache_record(detail);
+    m_wallet->set_ons_cache_record(detail);
   }
   for (size_t i = last_index + 1; i < args.size(); i++)
     fail_msg_writer() << args[i] << " not found\n";
@@ -6996,22 +6996,22 @@ bool simple_wallet::lns_print_name_to_owners(std::vector<std::string> args)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool simple_wallet::lns_print_owners_to_names(const std::vector<std::string>& args)
+bool simple_wallet::ons_print_owners_to_names(const std::vector<std::string>& args)
 {
   if (!try_connect_to_daemon())
     return false;
 
-  std::vector<std::vector<cryptonote::rpc::LNS_OWNERS_TO_NAMES::response_entry>> rpc_results;
-  std::vector<cryptonote::rpc::LNS_OWNERS_TO_NAMES::request> requests(1);
+  std::vector<std::vector<cryptonote::rpc::ONS_OWNERS_TO_NAMES::response_entry>> rpc_results;
+  std::vector<cryptonote::rpc::ONS_OWNERS_TO_NAMES::request> requests(1);
 
-  std::unordered_map<std::string, tools::wallet2::lns_detail> cache = m_wallet->get_lns_cache();
+  std::unordered_map<std::string, tools::wallet2::ons_detail> cache = m_wallet->get_ons_cache();
 
   if (args.size() == 0)
   {
     for (uint32_t index = 0; index < m_wallet->get_num_subaddresses(m_current_subaddress_account); ++index)
     {
 
-      if (requests.back().entries.size() >= cryptonote::rpc::LNS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES)
+      if (requests.back().entries.size() >= cryptonote::rpc::ONS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES)
         requests.emplace_back();
       requests.back().entries.push_back(m_wallet->get_subaddress_as_str({m_current_subaddress_account, index}));
     }
@@ -7032,7 +7032,7 @@ bool simple_wallet::lns_print_owners_to_names(const std::vector<std::string>& ar
         //return false;
       //}
 
-      if (requests.back().entries.size() >= cryptonote::rpc::LNS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES)
+      if (requests.back().entries.size() >= cryptonote::rpc::ONS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES)
         requests.emplace_back();
       requests.back().entries.push_back(arg);
     }
@@ -7041,10 +7041,10 @@ bool simple_wallet::lns_print_owners_to_names(const std::vector<std::string>& ar
   rpc_results.reserve(requests.size());
   for (auto const &request : requests)
   {
-    auto [success, result] = m_wallet->lns_owners_to_names(request);
+    auto [success, result] = m_wallet->ons_owners_to_names(request);
     if (!success)
     {
-      fail_msg_writer() << "Connection to daemon failed when requesting LNS names";
+      fail_msg_writer() << "Connection to daemon failed when requesting ONS names";
       return false;
     }
     rpc_results.emplace_back(std::move(result));
@@ -7073,8 +7073,8 @@ bool simple_wallet::lns_print_owners_to_names(const std::vector<std::string>& ar
       if (auto got = cache.find(entry.name_hash); got != cache.end())
       {
         name = got->second.name;
-        lns::mapping_value mv;
-        if (lns::mapping_value::validate_encrypted(entry.type, oxenmq::from_hex(entry.encrypted_value), &mv)
+        ons::mapping_value mv;
+        if (ons::mapping_value::validate_encrypted(entry.type, oxenmq::from_hex(entry.encrypted_value), &mv)
             && mv.decrypt(name, entry.type))
           value = mv.to_readable_value(nettype, entry.type);
       }

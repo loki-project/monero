@@ -332,7 +332,7 @@ namespace cryptonote
     network_version_12_checkpointing, // Checkpointing, Relaxed Deregistration, RandomXL, Oxen Storage Server
     network_version_13_enforce_checkpoints,
     network_version_14_blink,
-    network_version_15_lns,
+    network_version_15_ons,
     network_version_16_pulse,
     network_version_17, // future HF
     network_version_18, // future HF

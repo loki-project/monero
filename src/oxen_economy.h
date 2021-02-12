@@ -54,10 +54,10 @@ static_assert(BLINK_BURN_TX_FEE_PERCENT >= 0, "blink burn tx percent cannot be n
 
 // -------------------------------------------------------------------------------------------------
 //
-// LNS
+// ONS
 //
 // -------------------------------------------------------------------------------------------------
-namespace lns
+namespace ons
 {
 enum struct mapping_type : uint16_t
 {
@@ -73,7 +73,7 @@ enum struct mapping_type : uint16_t
 
 constexpr bool is_lokinet_type(mapping_type t) { return t >= mapping_type::lokinet && t <= mapping_type::lokinet_10years; }
 
-// How many days we add per "year" of LNS lokinet registration.  We slightly extend this to the 368
+// How many days we add per "year" of ONS lokinet registration.  We slightly extend this to the 368
 // days per registration "year" to allow for some blockchain time drift + leap years.
 constexpr uint64_t REGISTRATION_YEAR_DAYS = 368;
 
@@ -84,7 +84,7 @@ constexpr uint64_t burn_needed(uint8_t hf_version, mapping_type type)
   // The base amount for session/wallet/lokinet-1year:
   const uint64_t basic_fee = (
       hf_version >= 16 ? 15*COIN :  // cryptonote::network_version_16_pulse -- but don't want to add cryptonote_config.h include
-      20*COIN                       // cryptonote::network_version_15_lns
+      20*COIN                       // cryptonote::network_version_15_ons
   );
   switch (type)
   {
@@ -105,5 +105,5 @@ constexpr uint64_t burn_needed(uint8_t hf_version, mapping_type type)
   }
   return result;
 }
-}; // namespace lns
+}; // namespace ons
 

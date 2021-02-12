@@ -298,7 +298,7 @@ namespace hw {
 
     LEDGER_INS(GET_TX_PROOF,                    0xA0);
     LEDGER_INS(GEN_UNLOCK_SIGNATURE,            0xA2);
-    LEDGER_INS(GEN_LNS_SIGNATURE,               0xA3);
+    LEDGER_INS(GEN_ONS_SIGNATURE,               0xA3);
     LEDGER_INS(GEN_KEY_IMAGE_SIGNATURE,         0xA4);
 
     LEDGER_INS(GET_RESPONSE,                    0xc0);
@@ -1316,16 +1316,16 @@ namespace hw {
         return true;
     }
 
-    bool device_ledger::generate_lns_signature(std::string_view sig_data, const cryptonote::account_keys& keys, const cryptonote::subaddress_index& index, crypto::signature& sig) {
+    bool device_ledger::generate_ons_signature(std::string_view sig_data, const cryptonote::account_keys& keys, const cryptonote::subaddress_index& index, crypto::signature& sig) {
         // Initialize (prompts the user):
-        int offset = set_command_header_noopt(INS_GEN_LNS_SIGNATURE);
-        CHECK_AND_ASSERT_THROW_MES(finish_and_exchange(offset, true) == SW_OK, "LNS denied on device.");
+        int offset = set_command_header_noopt(INS_GEN_ONS_SIGNATURE);
+        CHECK_AND_ASSERT_THROW_MES(finish_and_exchange(offset, true) == SW_OK, "ONS denied on device.");
 
-        // Send lns signature data to be hashed:
-        exchange_multipart_data(INS_GEN_LNS_SIGNATURE, 1, sig_data, BLAKE2B_HASH_CHUNK_SIZE);
+        // Send ons signature data to be hashed:
+        exchange_multipart_data(INS_GEN_ONS_SIGNATURE, 1, sig_data, BLAKE2B_HASH_CHUNK_SIZE);
 
         // Send the subaddr indices and get the signature:
-        offset = set_command_header_noopt(INS_GEN_LNS_SIGNATURE, 2);
+        offset = set_command_header_noopt(INS_GEN_ONS_SIGNATURE, 2);
         send_bytes(&index, sizeof(index), offset);
         finish_and_exchange(offset);
 
@@ -1449,7 +1449,7 @@ namespace hw {
 
       // As of protocol version 4, we send:
       // - tx version
-      // - tx type (transfer, registration, stake, lns)
+      // - tx type (transfer, registration, stake, ons)
       // - tx lock time (if the tx has multiple lock times this will be the largest one)
       // We then wait for confirmation from the device, and if we get it we continue by sending the
       // data in chunks.  The last chunk will have a p2 subparameter of 0;

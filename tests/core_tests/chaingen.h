@@ -1358,7 +1358,7 @@ public:
     uint64_t change_amount;
 
     constexpr size_t nmix = 9;
-    if (m_tx_params.tx_type == cryptonote::txtype::oxen_name_system) // LNS txes only have change
+    if (m_tx_params.tx_type == cryptonote::txtype::oxen_name_system) // ONS txes only have change
     {
       fill_tx_sources_and_multi_destinations(
           m_events, m_head, m_from, m_to, nullptr /*amounts*/, 0 /*num_amounts*/, m_fee, nmix, sources, destinations, true /*add change*/, &change_amount);
@@ -1456,7 +1456,7 @@ struct oxen_chain_generator
   mutable std::unordered_map<crypto::public_key, crypto::secret_key> service_node_keys_;
   service_nodes::service_node_list::state_set                        state_history_;
   uint64_t                                                           last_cull_height_ = 0;
-  std::shared_ptr<lns::name_system_db>                               lns_db_ = std::make_shared<lns::name_system_db>();
+  std::shared_ptr<ons::name_system_db>                               ons_db_ = std::make_shared<ons::name_system_db>();
   oxen_chain_generator_db                                            db_;
   uint8_t                                                            hf_version_ = cryptonote::network_version_7;
   std::vector<test_event_entry>&                                     events_;
@@ -1494,9 +1494,9 @@ struct oxen_chain_generator
 
   // NOTE: Add constructed TX to events_ and assume that it is valid to add to the blockchain. If the TX is meant to be unaddable to the blockchain use the individual create + add functions to
   // be able to mark the add TX event as something that should trigger a failure.
-  cryptonote::transaction                              create_and_add_oxen_name_system_tx(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, lns::mapping_value const &value, lns::generic_owner const *owner = nullptr, lns::generic_owner const *backup_owner = nullptr, bool kept_by_block = false);
-  cryptonote::transaction                              create_and_add_oxen_name_system_tx_update(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, lns::mapping_value const *value, lns::generic_owner const *owner = nullptr, lns::generic_owner const *backup_owner = nullptr, lns::generic_signature *signature = nullptr, bool kept_by_block = false);
-  cryptonote::transaction                              create_and_add_oxen_name_system_tx_renew(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, bool kept_by_block = false);
+  cryptonote::transaction                              create_and_add_oxen_name_system_tx(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, ons::mapping_value const &value, ons::generic_owner const *owner = nullptr, ons::generic_owner const *backup_owner = nullptr, bool kept_by_block = false);
+  cryptonote::transaction                              create_and_add_oxen_name_system_tx_update(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, ons::mapping_value const *value, ons::generic_owner const *owner = nullptr, ons::generic_owner const *backup_owner = nullptr, ons::generic_signature *signature = nullptr, bool kept_by_block = false);
+  cryptonote::transaction                              create_and_add_oxen_name_system_tx_renew(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, bool kept_by_block = false);
   cryptonote::transaction                              create_and_add_tx                 (const cryptonote::account_base& src, const cryptonote::account_public_address& dest, uint64_t amount, uint64_t fee = TESTS_DEFAULT_FEE, bool kept_by_block = false);
   cryptonote::transaction                              create_and_add_state_change_tx(service_nodes::new_state state, const crypto::public_key& pub_key, uint16_t reasons_all, uint16_t reasons_any, uint64_t height = -1, const std::vector<uint64_t>& voters = {}, uint64_t fee = 0, bool kept_by_block = false);
   cryptonote::transaction                              create_and_add_registration_tx(const cryptonote::account_base& src, const cryptonote::keypair& sn_keys = cryptonote::keypair{hw::get_device("default")}, bool kept_by_block = false);
@@ -1518,11 +1518,11 @@ struct oxen_chain_generator
   cryptonote::checkpoint_t                             create_service_node_checkpoint(uint64_t block_height, size_t num_votes) const;
 
   // value: Takes the binary value NOT the human readable version, of the name->value mapping
-  static const uint64_t LNS_AUTO_BURN = static_cast<uint64_t>(-1);
-  cryptonote::transaction                              create_oxen_name_system_tx(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, lns::mapping_value const &value, lns::generic_owner const *owner = nullptr, lns::generic_owner const *backup_owner = nullptr, std::optional<uint64_t> burn_override = std::nullopt) const;
-  cryptonote::transaction                              create_oxen_name_system_tx_update(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, lns::mapping_value const *value, lns::generic_owner const *owner = nullptr, lns::generic_owner const *backup_owner = nullptr, lns::generic_signature *signature = nullptr, bool use_asserts = false) const;
-  cryptonote::transaction                              create_oxen_name_system_tx_update_w_extra(cryptonote::account_base const &src, uint8_t hf_version, cryptonote::tx_extra_oxen_name_system const &lns_extra) const;
-  cryptonote::transaction                              create_oxen_name_system_tx_renew(cryptonote::account_base const &src, uint8_t hf_version, lns::mapping_type type, std::string const &name, std::optional<uint64_t> burn_override = std::nullopt) const;
+  static const uint64_t ONS_AUTO_BURN = static_cast<uint64_t>(-1);
+  cryptonote::transaction                              create_oxen_name_system_tx(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, ons::mapping_value const &value, ons::generic_owner const *owner = nullptr, ons::generic_owner const *backup_owner = nullptr, std::optional<uint64_t> burn_override = std::nullopt) const;
+  cryptonote::transaction                              create_oxen_name_system_tx_update(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, ons::mapping_value const *value, ons::generic_owner const *owner = nullptr, ons::generic_owner const *backup_owner = nullptr, ons::generic_signature *signature = nullptr, bool use_asserts = false) const;
+  cryptonote::transaction                              create_oxen_name_system_tx_update_w_extra(cryptonote::account_base const &src, uint8_t hf_version, cryptonote::tx_extra_oxen_name_system const &ons_extra) const;
+  cryptonote::transaction                              create_oxen_name_system_tx_renew(cryptonote::account_base const &src, uint8_t hf_version, ons::mapping_type type, std::string const &name, std::optional<uint64_t> burn_override = std::nullopt) const;
 
   oxen_blockchain_entry                                create_genesis_block(const cryptonote::account_base &miner, uint64_t timestamp);
   oxen_blockchain_entry                                create_next_block(const std::vector<cryptonote::transaction>& txs = {}, cryptonote::checkpoint_t const *checkpoint = nullptr);
