@@ -126,7 +126,7 @@ inline std::ostream &operator<<(std::ostream &os, mapping_type type) { return os
 constexpr bool mapping_type_allowed(uint8_t hf_version, mapping_type type) {
   return (type == mapping_type::session && hf_version >= cryptonote::network_version_15_ons)
       || (is_lokinet_type(type) && hf_version >= cryptonote::network_version_16_pulse)
-      || (type == mapping_type::wallet && hf_version >= cryptonote::network_version_17);
+      || (type == mapping_type::wallet && hf_version >= cryptonote::network_version_18);
 }
 
 // Returns all mapping types supported for lookup as of the given hardfork.  (Note that this does

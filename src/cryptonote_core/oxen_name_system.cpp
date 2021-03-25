@@ -602,7 +602,7 @@ std::vector<mapping_type> all_mapping_types(uint8_t hf_version) {
     result.push_back(mapping_type::session);
   if (hf_version >= cryptonote::network_version_16_pulse)
     result.push_back(mapping_type::lokinet);
-  if (hf_version >= cryptonote::network_version_17)
+  if (hf_version >= cryptonote::network_version_18)
     result.push_back(mapping_type::wallet);
   return result;
 }
@@ -1285,7 +1285,7 @@ bool validate_mapping_type(std::string_view mapping_type_str, uint8_t hf_version
         mapping_type_ = ons::mapping_type::lokinet_10years;
     }
   }
-  if (hf_version >= cryptonote::network_version_17)
+  if (hf_version >= cryptonote::network_version_18)
   {
     if (tools::string_iequal(mapping, "wallet"))
       mapping_type_ = ons::mapping_type::wallet;
