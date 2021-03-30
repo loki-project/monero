@@ -1224,7 +1224,7 @@ private:
 
     // params constructor, accumulates the burn amounts if the priority is
     // a blink and, or a ons tx. If it is a blink TX, ons_burn_type is ignored.
-    static cryptonote::oxen_construct_tx_params construct_params(uint8_t hf_version, cryptonote::txtype tx_type, uint32_t priority, ons::mapping_type ons_burn_type = static_cast<ons::mapping_type>(0));
+    static cryptonote::oxen_construct_tx_params construct_params(uint8_t hf_version, cryptonote::txtype tx_type, uint32_t priority, uint64_t extra_burn = 0, ons::mapping_type ons_burn_type = static_cast<ons::mapping_type>(0));
 
     bool is_unattended() const { return m_unattended; }
 

@@ -5676,6 +5676,27 @@ void simple_wallet::check_for_inactivity_lock(bool user)
   }
 }
 //----------------------------------------------------------------------------------------------------
+std::string eat_named_argument(std::vector<std::string> &args, std::string_view prefix)
+{
+  std::string result = {};
+  for (auto it = args.begin(); it != args.end(); it++)
+  {
+    if (it->size() > prefix.size() && tools::starts_with(*it, prefix))
+    {
+      result = it->substr(prefix.size());
+      args.erase(it);
+      break;
+    }
+  }
+
+  return result;
+}
+template <typename... Prefixes>
+std::array<std::string, sizeof...(Prefixes)> eat_named_arguments(std::vector<std::string> &args, const Prefixes&... prefixes)
+{
+  return { eat_named_argument(args, prefixes)... };
+}
+//----------------------------------------------------------------------------------------------------
 bool simple_wallet::confirm_and_send_tx(std::vector<cryptonote::address_parse_info> const &dests, std::vector<tools::wallet2::pending_tx> &ptx_vector, bool blink, uint64_t lock_time_in_blocks, uint64_t unlock_block, bool called_by_mms)
 {
   if (ptx_vector.empty())
@@ -5845,6 +5866,12 @@ bool simple_wallet::transfer_main(Transfer transfer_type, const std::vector<std:
     return false;
 
   std::vector<std::string> local_args = args_;
+
+  static constexpr auto BURN_PREFIX = "burn="sv;
+  uint64_t burn_amount = 0;
+  std::string burn_amount_str = eat_named_argument(local_args, BURN_PREFIX);
+  tools::parse_int(burn_amount_str, burn_amount);
+
   uint32_t priority = 0;
   std::set<uint32_t> subaddr_indices  = {};
   if (!parse_subaddr_indices_and_priority(*m_wallet, local_args, subaddr_indices, priority, m_current_subaddress_account)) return false;
@@ -5862,6 +5889,7 @@ bool simple_wallet::transfer_main(Transfer transfer_type, const std::vector<std:
      fail_msg_writer() << tr("wrong number of arguments");
      return false;
   }
+
 
   std::vector<uint8_t> extra;
   if (!local_args.empty())
@@ -6008,7 +6036,7 @@ bool simple_wallet::transfer_main(Transfer transfer_type, const std::vector<std:
     }
 
 
-    oxen_construct_tx_params tx_params = tools::wallet2::construct_params(*hf_version, txtype::standard, priority);
+    oxen_construct_tx_params tx_params = tools::wallet2::construct_params(*hf_version, txtype::standard, priority, burn_amount*COIN);
     ptx_vector = m_wallet->create_transactions_2(dsts, CRYPTONOTE_DEFAULT_TX_MIXIN, unlock_block, priority, extra, m_current_subaddress_account, subaddr_indices, tx_params);
 
     if (ptx_vector.empty())
@@ -6414,27 +6442,6 @@ bool simple_wallet::print_locked_stakes(const std::vector<std::string>& /*args*/
   SCOPED_WALLET_UNLOCK();
   query_locked_stakes(true/*print_result*/);
   return true;
-}
-//----------------------------------------------------------------------------------------------------
-std::string eat_named_argument(std::vector<std::string> &args, std::string_view prefix)
-{
-  std::string result = {};
-  for (auto it = args.begin(); it != args.end(); it++)
-  {
-    if (it->size() > prefix.size() && tools::starts_with(*it, prefix))
-    {
-      result = it->substr(prefix.size());
-      args.erase(it);
-      break;
-    }
-  }
-
-  return result;
-}
-template <typename... Prefixes>
-std::array<std::string, sizeof...(Prefixes)> eat_named_arguments(std::vector<std::string> &args, const Prefixes&... prefixes)
-{
-  return { eat_named_argument(args, prefixes)... };
 }
 
 // Parse a user-provided typestring value; if not provided, guess from the provided name and value.

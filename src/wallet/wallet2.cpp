@@ -7799,7 +7799,7 @@ uint64_t wallet2::get_fee_quantization_mask() const
   return 1;
 }
 
-oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx_type, uint32_t priority, ons::mapping_type type)
+oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx_type, uint32_t priority, uint64_t extra_burn, ons::mapping_type type)
 {
   oxen_construct_tx_params tx_params;
   tx_params.hf_version = hf_version;
@@ -7808,11 +7808,11 @@ oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx
   if (tx_type == txtype::oxen_name_system)
   {
     assert(priority != tools::tx_priority_blink);
-    tx_params.burn_fixed   = ons::burn_needed(hf_version, type);
+    tx_params.burn_fixed   = ons::burn_needed(hf_version, type) + extra_burn;
   }
   else if (priority == tools::tx_priority_blink)
   {
-    tx_params.burn_fixed   = BLINK_BURN_FIXED;
+    tx_params.burn_fixed   = BLINK_BURN_FIXED + extra_burn;
     tx_params.burn_percent = hf_version <= network_version_14_blink
         ? BLINK_BURN_TX_FEE_PERCENT_OLD
         : BLINK_BURN_TX_FEE_PERCENT;
@@ -8838,7 +8838,7 @@ std::vector<wallet2::pending_tx> wallet2::ons_create_buy_mapping_tx(ons::mapping
     return {};
   }
 
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, type);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, type);
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
                                       0 /*unlock_at_block*/,
@@ -8895,7 +8895,7 @@ std::vector<wallet2::pending_tx> wallet2::ons_create_renewal_tx(
     return {};
   }
 
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, type);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, type);
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
                                       0 /*unlock_at_block*/,
@@ -8954,7 +8954,7 @@ std::vector<wallet2::pending_tx> wallet2::ons_create_update_mapping_tx(ons::mapp
     if (reason) *reason = ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
     return {};
   }
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, ons::mapping_type::update_record_internal);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, ons::mapping_type::update_record_internal);
 
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
@@ -10909,6 +10909,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     THROW_WALLET_EXCEPTION_IF(needed_money < dt.amount, error::tx_sum_overflow, dsts, 0, m_nettype);
   }
 
+
   // throw if attempting a transaction with no money
   THROW_WALLET_EXCEPTION_IF(needed_money == 0 && !is_ons_tx, error::zero_destination);
 
@@ -11321,7 +11322,7 @@ skip_tx:
     // fee percent)
     if (burning)
     {
-      tx_params.burn_fixed = burn_fixed + tx.needed_fee * burn_percent / fee_percent;
+      tx_params.burn_fixed = burn_fixed + (tx.needed_fee - burn_fixed) * burn_percent / fee_percent;
       // Make sure we can't enlarge the tx because that could make it invalid:
       THROW_WALLET_EXCEPTION_IF(tx_params.burn_fixed > BURN_FEE_PLACEHOLDER, error::wallet_internal_error, "attempt to burn a larger amount than is internally supported");
     }
