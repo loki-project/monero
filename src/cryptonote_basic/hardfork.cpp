@@ -96,7 +96,7 @@ static constexpr HardFork::Params testnet_hard_forks[] =
 static constexpr HardFork::Params devnet_hard_forks[] =
 {
   { network_version_7,                      1,      0, 1617837000 },
-  { network_version_18,                     2,      0, 1617837000 }, // Wednesday, April 7, 2021 11:10:00 PM UTC
+  { network_version_18,                   100,      0, 1617837000 }, // Wednesday, April 7, 2021 11:10:00 PM UTC
 };
 
 uint64_t HardFork::get_hardcoded_hard_fork_height(network_type nettype, cryptonote::network_version version)

@@ -297,7 +297,7 @@ namespace config
     inline constexpr uint16_t ZMQ_RPC_DEFAULT_PORT = 38858;
     inline constexpr uint16_t QNET_DEFAULT_PORT = 38859;
     inline constexpr boost::uuids::uuid const NETWORK_ID = { {
-        0xa9, 0xf7, 0x5c, 0x7d, 0x55, 0x17, 0xcb, 0x6b, 0x5a, 0xf4, 0x69, 0x79, 0x7a, 0x57, 0xab, 0xd3
+        0xa9, 0xf7, 0x5c, 0x7d, 0x55, 0x17, 0xcb, 0x6b, 0x5a, 0xf4, 0x32, 0x79, 0x7a, 0x57, 0xab, 0xd3
       } };
     inline constexpr std::string_view GENESIS_TX = "04011e1e01ff00018080c9db97f4fb2702fa27e905f604faa4eb084ee675faca77b0cfea9adec1526da33cae5e286f31624201dae05bf3fa1662b7fd373c92426763d921cf3745e10ee43edb510f690c656f247200000000000000000000000000000000000000000000000000000000000000000000"sv;
     inline constexpr uint32_t GENESIS_NONCE = 12345;

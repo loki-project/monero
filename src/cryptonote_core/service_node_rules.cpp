@@ -22,7 +22,7 @@ uint64_t get_staking_requirement(cryptonote::network_type m_nettype, uint64_t he
   // (proportionally) whatever staking changes happen on mainnet.  (The 650k is because devnet
   // launched at ~600k mainnet height, so this puts it a little ahead).
   if (m_nettype == cryptonote::DEVNET)
-      return get_staking_requirement(cryptonote::MAINNET, 600000 + height, hf_version) / 10;
+      return COIN * 100;
 
   if (hf_version >= cryptonote::network_version_16_pulse)
     return 15000'000000000;
