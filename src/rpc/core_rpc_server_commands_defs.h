@@ -300,15 +300,15 @@ namespace rpc {
         std::optional<std::vector<std::string>> reasons_maybe; // If present, this contains any decomm/dereg reasons that were given by some but not all quorum voters
         KV_MAP_SERIALIZABLE
       };
-      struct lns_details
+      struct ons_details
       {
-        std::optional<bool> buy;                 // Provided and true iff this is an LNS buy record
-        std::optional<bool> update;              // Provided and true iff this is an LNS record update
-        std::optional<bool> renew;               // Provided and true iff this is an LNS record renewal
-        std::string type;                        // The LNS request type.  For registrations: "lokinet", "session", "wallet"; for a record update: "update"
+        std::optional<bool> buy;                 // Provided and true iff this is an ONS buy record
+        std::optional<bool> update;              // Provided and true iff this is an ONS record update
+        std::optional<bool> renew;               // Provided and true iff this is an ONS record renewal
+        std::string type;                        // The ONS request type.  For registrations: "lokinet", "session", "wallet"; for a record update: "update"
         std::optional<uint64_t> blocks;          // The registration length in blocks (only applies to lokinet registrations; session/wallet registrations do not expire)
         std::string name_hash;                   // The hashed name of the record being purchased/updated, in hex (the actual name is not provided on the blockchain).
-        std::optional<std::string> prev_txid;    // For an update, this points at the txid of the previous lns update transaction.
+        std::optional<std::string> prev_txid;    // For an update, this points at the txid of the previous ons update transaction.
         std::optional<std::string> value;        // The encrypted value of the record, in hex.  Note that this is encrypted using the actual name itself (*not* the hashed name).
         std::optional<std::string> owner;        // The owner of this record; this can be a main wallet, wallet subaddress, or a plain public key.
         std::optional<std::string> backup_owner; // Backup owner wallet/pubkey of the record, if provided.
@@ -330,7 +330,7 @@ namespace rpc {
       std::optional<std::string> tx_secret_key;     // The transaction secret key, included in registrations/stakes to decrypt transaction amounts and recipients
       std::vector<std::string> locked_key_images;   // Key image(s) locked by the transaction (for registrations, stakes)
       std::optional<std::string> key_image_unlock;  // A key image being unlocked in a stake unlock request (an unlock will be started for *all* key images locked in the same SN contributions).
-      std::optional<lns_details> lns;               // an LNS registration or update
+      std::optional<ons_details> ons;               // an ONS registration or update
       KV_MAP_SERIALIZABLE
     };
 
@@ -2435,9 +2435,9 @@ namespace rpc {
   OXEN_RPC_DOC_INTROSPECT
   // Get the name mapping for a Loki Name Service entry. Loki currently supports mappings
   // for Session and Lokinet.
-  struct LNS_NAMES_TO_OWNERS : PUBLIC
+  struct ONS_NAMES_TO_OWNERS : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_names_to_owners"); }
+    static constexpr auto names() { return NAMES("ons_names_to_owners", "lns_names_to_owners"); }
 
     static constexpr size_t MAX_REQUEST_ENTRIES      = 256;
     static constexpr size_t MAX_TYPE_REQUEST_ENTRIES = 8;
@@ -2460,11 +2460,11 @@ namespace rpc {
     struct response_entry
     {
       uint64_t entry_index;     // The index in request_entry's `entries` array that was resolved via Loki Name Service.
-      lns::mapping_type type;   // The type of Loki Name Service entry that the owner owns: currently supported values are 0 (session), 2 (lokinet)
+      ons::mapping_type type;   // The type of Loki Name Service entry that the owner owns: currently supported values are 0 (session), 2 (lokinet)
       std::string name_hash;    // The hash of the name that was queried, in base64
       std::string owner;        // The public key that purchased the Loki Name Service entry.
       std::optional<std::string> backup_owner; // The backup public key that the owner specified when purchasing the Loki Name Service entry. Omitted if no backup owner.
-      std::string encrypted_value; // The encrypted value that the name maps to. See the `LNS_RESOLVE` description for information on how this value can be decrypted.
+      std::string encrypted_value; // The encrypted value that the name maps to. See the `ONS_RESOLVE` description for information on how this value can be decrypted.
       uint64_t update_height;   // The last height that this Loki Name Service entry was updated on the Blockchain.
       std::optional<uint64_t> expiration_height; // For records that expire, this will be set to the expiration block height.
       std::string txid;                          // The txid of the mapping's most recent update or purchase.
@@ -2481,12 +2481,34 @@ namespace rpc {
     };
   };
 
+  // Resolves a provided address, will return the address if valid or the the resolved ONS wallet mapping if valid ONS Name
+  struct ONS_RESOLVE_ADDRESS : PUBLIC
+  {
+    static constexpr auto names() { return NAMES("ons_resolve_address"); }
+
+    struct request
+    {
+      std::string address; // The address or name to resolve to a public key via Oxen Name Service.
+      uint64_t height;               // Optional: if provided and true, the result will be provided for a Oxen Name Resolved at this height
+
+      KV_MAP_SERIALIZABLE
+    };
+
+    struct response
+    {
+      std::optional<std::string> address; // The value that the address maps to.
+      std::string status; // Generic RPC error code. "OK" is the success value.
+
+      KV_MAP_SERIALIZABLE
+    };
+  };
+
   OXEN_RPC_DOC_INTROSPECT
   // Get all the name mappings for the queried owner. The owner can be either a ed25519 public key or Monero style
   // public key; by default purchases are owned by the spend public key of the purchasing wallet.
-  struct LNS_OWNERS_TO_NAMES : PUBLIC
+  struct ONS_OWNERS_TO_NAMES : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_owners_to_names"); }
+    static constexpr auto names() { return NAMES("ons_owners_to_names", "lns_owners_to_names"); }
 
     static constexpr size_t MAX_REQUEST_ENTRIES = 256;
     struct request
@@ -2500,7 +2522,7 @@ namespace rpc {
     struct response_entry
     {
       uint64_t    request_index;   // (Deprecated) The index in request's `entries` array that was resolved via Loki Name Service.
-      lns::mapping_type type;      // The category the Loki Name Service entry belongs to; currently 0 for Session and 2 for Lokinet.
+      ons::mapping_type type;      // The category the Loki Name Service entry belongs to; currently 0 for Session and 2 for Lokinet.
       std::string name_hash;       // The hash of the name that the owner purchased via Loki Name Service in base64
       std::string owner;           // The backup public key specified by the owner that purchased the Loki Name Service entry.
       std::optional<std::string> backup_owner; // The backup public key specified by the owner that purchased the Loki Name Service entry. Omitted if no backup owner.
@@ -2522,31 +2544,31 @@ namespace rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Performs a simple LNS lookup of a BLAKE2b-hashed name.  This RPC method is meant for simple,
+  // Performs a simple ONS lookup of a BLAKE2b-hashed name.  This RPC method is meant for simple,
   // single-value resolutions that do not care about registration details, etc.; if you need more
-  // information use LNS_NAMES_TO_OWNERS instead.
+  // information use ONS_NAMES_TO_OWNERS instead.
   //
   // Technical details: the returned value is encrypted using the name itself so that neither this
   // oxend responding to the RPC request nor any other blockchain observers can (easily) obtain the
   // name of registered addresses or the registration details.  Thus, from a client's point of view,
-  // resolving an LNS record involves:
+  // resolving an ONS record involves:
   //
   // - Lower-case the name.
   // - Calculate the name hash as a null-key, 32-byte BLAKE2b hash of the lower-case name.
-  // - Obtain the encrypted value and the nonce from this RPC call (or LNS_NAMES_TO_OWNERS); (encode
+  // - Obtain the encrypted value and the nonce from this RPC call (or ONS_NAMES_TO_OWNERS); (encode
   //   the name hash using either hex or base64.).
   // - Calculate the decryption key as a 32-byte BLAKE2b keyed hash of the name using the
   //   (unkeyed) name hash calculated above as the hash key.
   // - Decrypt (and verify) using XChaCha20-Poly1305 (for example libsodium's
   //   crypto_aead_xchacha20poly1305_ietf_decrypt) using the above decryption key and using the
   //   first 24 bytes of the name hash as the public nonce.
-  struct LNS_RESOLVE : PUBLIC
+  struct ONS_RESOLVE : PUBLIC
   {
-    static constexpr auto names() { return NAMES("lns_resolve"); }
+    static constexpr auto names() { return NAMES("ons_resolve", "lns_resolve"); }
 
     struct request
     {
-      uint16_t type;         // The LNS type (mandatory); currently supported values are: 0 = session, 2 = lokinet.
+      uint16_t type;         // The ONS type (mandatory); currently supported values are: 0 = session, 2 = lokinet.
       std::string name_hash; // The 32-byte BLAKE2b hash of the name to look up, encoded as 64 hex digits or 44/43 base64 characters (with/without padding).
 
       KV_MAP_SERIALIZABLE
@@ -2554,7 +2576,7 @@ namespace rpc {
 
     struct response
     {
-      std::optional<std::string> encrypted_value; // The encrypted LNS value, in hex.  Will be omitted from the response if the given name_hash is not registered.
+      std::optional<std::string> encrypted_value; // The encrypted ONS value, in hex.  Will be omitted from the response if the given name_hash is not registered.
       std::optional<std::string> nonce; // The nonce value used for encryption, in hex.
 
       KV_MAP_SERIALIZABLE
@@ -2660,9 +2682,10 @@ namespace rpc {
     REPORT_PEER_SS_STATUS,
     TEST_TRIGGER_P2P_RESYNC,
     TEST_TRIGGER_UPTIME_PROOF,
-    LNS_NAMES_TO_OWNERS,
-    LNS_OWNERS_TO_NAMES,
-    LNS_RESOLVE,
+    ONS_NAMES_TO_OWNERS,
+    ONS_OWNERS_TO_NAMES,
+    ONS_RESOLVE,
+    ONS_RESOLVE_ADDRESS,
     FLUSH_CACHE
   >;
 

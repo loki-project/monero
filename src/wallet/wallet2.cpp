@@ -1,22 +1,22 @@
 // Copyright (c) 2014-2019, The Monero Project
 // Copyright (c)      2018, The Loki Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -26,7 +26,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #include <iterator>
@@ -2546,7 +2546,7 @@ void wallet2::process_unconfirmed(const crypto::hash &txid, const cryptonote::tr
   if(unconf_it != m_unconfirmed_txs.end()) {
     if (store_tx_info()) {
       try {
-        // TODO(doyle): LNS introduces tx type stake, we can use this to quickly determine if a transaction is staking
+        // TODO(doyle): ONS introduces tx type stake, we can use this to quickly determine if a transaction is staking
         // transaction without having to parse tx_extra.
         bool stake = service_nodes::tx_get_staking_components(tx, nullptr /*stake*/);
         wallet::pay_type pay_type = stake ? wallet::pay_type::stake : wallet::pay_type::out;
@@ -2621,7 +2621,7 @@ void wallet2::process_new_blockchain_entry(const cryptonote::block& b, const cry
       " not match with daemon response size=" + std::to_string(parsed_block.o_indices.indices.size()));
 
   //handle transactions from new block
-    
+
   //optimization: seeking only for blocks that are not older then the wallet creation time plus 1 day. 1 day is for possible user incorrect time setup
   if (!should_skip_block(b, height))
   {
@@ -3377,7 +3377,7 @@ bool wallet2::add_address_book_row(const cryptonote::account_public_address &add
   a.m_payment_id = payment_id ? *payment_id : crypto::null_hash8;
   a.m_description = description;
   a.m_is_subaddress = is_subaddress;
-  
+
   auto old_size = m_address_book.size();
   m_address_book.push_back(a);
   if(m_address_book.size() == old_size+1)
@@ -3404,7 +3404,7 @@ bool wallet2::set_address_book_row(size_t row_id, const cryptonote::account_publ
 bool wallet2::delete_address_book_row(std::size_t row_id) {
   if(m_address_book.size() <= row_id)
     return false;
-  
+
   m_address_book.erase(m_address_book.begin()+row_id);
 
   return true;
@@ -3506,7 +3506,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
       encrypt_keys(*m_encrypt_keys_after_refresh);
       m_encrypt_keys_after_refresh = std::nullopt;
     }
-    
+
     hwdev.computing_key_images(false);
   };
 
@@ -4081,7 +4081,7 @@ std::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee::w
   std::string original_address;
   std::string original_view_secret_key;
   if (m_original_keys_available)
-  {  
+  {
     original_address = get_account_address_as_str(m_nettype, false, m_original_address);
     value.SetString(original_address.c_str(), original_address.length());
     json.AddMember("original_address", value, json.GetAllocator());
@@ -4089,7 +4089,7 @@ std::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee::w
     value.SetString(original_view_secret_key.c_str(), original_view_secret_key.length());
     json.AddMember("original_view_secret_key", value, json.GetAllocator());
   }
-  
+
   // Serialize the JSON object
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -4409,7 +4409,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, device_derivation_path, std::string, String, false, std::string());
     m_device_derivation_path = field_device_derivation_path;
-    
+
     if (json.HasMember("original_keys_available"))
     {
       GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, original_keys_available, int, Int, false, false);
@@ -5092,7 +5092,7 @@ std::string wallet2::make_multisig(const epee::wipeable_string &password,
       m_multisig_derivations = derivations;
     }
   }
-  
+
   if (!m_original_keys_available)
   {
     // Save the original i.e. non-multisig keys so the MMS can continue to use them to encrypt and decrypt messages
@@ -5817,7 +5817,7 @@ void wallet2::load(const fs::path& wallet_, const epee::wipeable_string& passwor
   {
     MERROR("Failed to save rings, will try again next time");
   }
-  
+
   try
   {
     if (use_fs)
@@ -6917,7 +6917,7 @@ crypto::hash wallet2::get_payment_id(const pending_tx &ptx) const
 // take a pending tx and actually send it to the daemon
 void wallet2::commit_tx(pending_tx& ptx, bool blink)
 {
-  if(m_light_wallet) 
+  if(m_light_wallet)
   {
     light_rpc::SUBMIT_RAW_TX::request oreq{};
     light_rpc::SUBMIT_RAW_TX::response ores{};
@@ -7015,12 +7015,12 @@ std::string wallet2::dump_tx_to_str(const std::vector<pending_tx> &ptx_vector) c
   unsigned_tx_set txs;
   for (auto &tx: ptx_vector)
   {
-    // Short payment id is encrypted with tx_key. 
+    // Short payment id is encrypted with tx_key.
     // Since sign_tx() generates new tx_keys and encrypts the payment id, we need to save the decrypted payment ID
     // Save tx construction_data to unsigned_tx_set
     txs.txes.push_back(get_construction_data_with_decrypted_short_payment_id(tx, m_account.get_device()));
   }
-  
+
   txs.transfers = export_outputs();
   // save as binary
   std::ostringstream oss;
@@ -7119,7 +7119,7 @@ bool wallet2::sign_tx(const fs::path& unsigned_filename, const fs::path& signed_
   unsigned_tx_set exported_txs;
   if(!load_unsigned_tx(unsigned_filename, exported_txs))
     return false;
-  
+
   if (accept_func && !accept_func(exported_txs))
   {
     LOG_PRINT_L1("Transactions rejected by callback");
@@ -7748,7 +7748,7 @@ uint64_t wallet2::get_fee_percent(uint32_t priority, txtype type) const
       THROW_WALLET_EXCEPTION(error::invalid_priority);
 
     uint64_t burn_pct = 0;
-    if (use_fork_rules(network_version_15_lns, 0))
+    if (use_fork_rules(network_version_15_ons, 0))
       burn_pct = BLINK_BURN_TX_FEE_PERCENT;
     else if (use_fork_rules(network_version_14_blink, 0))
       burn_pct = BLINK_BURN_TX_FEE_PERCENT_OLD;
@@ -7799,7 +7799,7 @@ uint64_t wallet2::get_fee_quantization_mask() const
   return 1;
 }
 
-oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx_type, uint32_t priority, lns::mapping_type type)
+oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx_type, uint32_t priority, uint64_t extra_burn, ons::mapping_type type)
 {
   oxen_construct_tx_params tx_params;
   tx_params.hf_version = hf_version;
@@ -7808,11 +7808,11 @@ oxen_construct_tx_params wallet2::construct_params(uint8_t hf_version, txtype tx
   if (tx_type == txtype::oxen_name_system)
   {
     assert(priority != tools::tx_priority_blink);
-    tx_params.burn_fixed   = lns::burn_needed(hf_version, type);
+    tx_params.burn_fixed   = ons::burn_needed(hf_version, type) + extra_burn;
   }
   else if (priority == tools::tx_priority_blink)
   {
-    tx_params.burn_fixed   = BLINK_BURN_FIXED;
+    tx_params.burn_fixed   = BLINK_BURN_FIXED + extra_burn;
     tx_params.burn_percent = hf_version <= network_version_14_blink
         ? BLINK_BURN_TX_FEE_PERCENT_OLD
         : BLINK_BURN_TX_FEE_PERCENT;
@@ -8196,7 +8196,7 @@ wallet2::stake_result wallet2::create_stake_tx(const crypto::public_key& service
   addr_info.address = this->get_address();
   //addr_info.address = this->get_account().get_keys().m_account_address;
   //addr_info.is_subaddress = false;
-  
+
   try
   {
     result = check_stake_allowed(service_node_key, addr_info, amount, amount_fraction);
@@ -8529,8 +8529,6 @@ wallet2::register_service_node_result wallet2::create_register_service_node_tx(c
 wallet2::request_stake_unlock_result wallet2::can_request_stake_unlock(const crypto::public_key &sn_key)
 {
   request_stake_unlock_result result = {};
-  result.ptx.tx.version = cryptonote::txversion::v4_tx_types;
-  result.ptx.tx.type    = cryptonote::txtype::key_image_unlock;
 
   std::string const sn_key_as_str = tools::type_to_hex(sn_key);
   {
@@ -8645,27 +8643,51 @@ wallet2::request_stake_unlock_result wallet2::can_request_stake_unlock(const cry
       }
     }
 
-    add_service_node_pubkey_to_tx_extra(result.ptx.tx.extra, sn_key);
-    add_tx_key_image_unlock_to_tx_extra(result.ptx.tx.extra, unlock);
+    std::vector<cryptonote::tx_destination_entry> dsts;
+    cryptonote::tx_destination_entry de = {};
+    de.addr = this->get_address();
+    de.is_subaddress = false;
+    de.amount = 0;
+    dsts.push_back(de);
+
+    std::optional<uint8_t> hf_version = get_hard_fork_version();
+    std::vector<uint8_t> extra;
+    // Priority set to unimportant because it does not take effect until processed in a block
+    uint32_t priority = tx_priority::tx_priority_unimportant;
+    std::set<uint32_t> subaddr_indices  = {};
+    oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, cryptonote::txtype::key_image_unlock, priority, UNSTAKE_BURN_FIXED);
+
+    add_service_node_pubkey_to_tx_extra(extra, sn_key);
+    add_tx_key_image_unlock_to_tx_extra(extra, unlock);
+    auto ptx_vector      = create_transactions_2(dsts,
+                                      CRYPTONOTE_DEFAULT_TX_MIXIN,
+                                      0,
+                                      priority,
+                                      extra,
+                                      0,
+                                      subaddr_indices,
+                                      tx_params);
+    result.ptx    = ptx_vector[0];
+
   }
 
   result.success = true;
   return result;
 }
 
-struct lns_prepared_args
+struct ons_prepared_args
 {
   bool prepared;
   operator bool() const { return prepared; }
-  lns::mapping_value      encrypted_value;
+  ons::mapping_value      encrypted_value;
   crypto::hash            name_hash;
-  lns::generic_owner      owner;
-  lns::generic_owner      backup_owner;
-  lns::generic_signature  signature;
+  ons::generic_owner      owner;
+  ons::generic_owner      backup_owner;
+  ons::generic_signature  signature;
   crypto::hash            prev_txid;
 };
 
-static bool try_generate_lns_signature(wallet2 const &wallet, std::string const &curr_owner, std::string const *new_owner, std::string const *new_backup_owner, lns_prepared_args &result)
+static bool try_generate_ons_signature(wallet2 const &wallet, std::string const &curr_owner, std::string const *new_owner, std::string const *new_backup_owner, ons_prepared_args &result)
 {
   cryptonote::address_parse_info curr_owner_parsed = {};
   if (!cryptonote::get_account_address_from_str(curr_owner_parsed, wallet.nettype(), curr_owner))
@@ -8674,7 +8696,7 @@ static bool try_generate_lns_signature(wallet2 const &wallet, std::string const 
   std::optional<cryptonote::subaddress_index> index = wallet.get_subaddress_index(curr_owner_parsed.address);
   if (!index) return false;
 
-  auto sig_data = lns::tx_extra_signature(
+  auto sig_data = ons::tx_extra_signature(
       result.encrypted_value.to_view(),
       new_owner ? &result.owner : nullptr,
       new_backup_owner ? &result.backup_owner : nullptr,
@@ -8684,40 +8706,40 @@ static bool try_generate_lns_signature(wallet2 const &wallet, std::string const 
   auto& account = wallet.get_account();
   auto& hwdev = account.get_device();
   hw::mode_resetter rst{hwdev};
-  hwdev.generate_lns_signature(sig_data, account.get_keys(), *index, result.signature.monero);
-  result.signature.type = lns::generic_owner_sig_type::monero;
+  hwdev.generate_ons_signature(sig_data, account.get_keys(), *index, result.signature.monero);
+  result.signature.type = ons::generic_owner_sig_type::monero;
 
   return true;
 }
 
-static lns_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const &wallet,
-                                                                  lns::mapping_type type,
+static ons_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const &wallet,
+                                                                  ons::mapping_type type,
                                                                   uint32_t priority,
                                                                   std::string name,
                                                                   std::string const *value,
                                                                   std::string const *owner,
                                                                   std::string const *backup_owner,
                                                                   bool make_signature,
-                                                                  lns::lns_tx_type txtype,
+                                                                  ons::ons_tx_type txtype,
                                                                   uint32_t account_index,
                                                                   std::string *reason,
-                                                                  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response)
+                                                                  std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> *response)
 {
-  lns_prepared_args result = {};
+  ons_prepared_args result = {};
   if (priority == tools::tx_priority_blink)
   {
-    if (reason) *reason = "Can not request a blink TX for Loki Name Service transactions";
+    if (reason) *reason = "Can not request a blink TX for Oxen Name Service transactions";
     return {};
   }
 
   name = tools::lowercase_ascii_string(name);
-  if (!lns::validate_lns_name(type, name, reason))
+  if (!ons::validate_ons_name(type, name, reason))
     return {};
 
-  result.name_hash = lns::name_to_hash(name);
+  result.name_hash = ons::name_to_hash(name);
   if (value)
   {
-    if (!lns::mapping_value::validate(wallet.nettype(), type, *value, &result.encrypted_value, reason))
+    if (!ons::mapping_value::validate(wallet.nettype(), type, *value, &result.encrypted_value, reason))
       return {};
 
     if (!result.encrypted_value.encrypt(name, &result.name_hash))
@@ -8727,28 +8749,28 @@ static lns_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const 
     }
   }
 
-  if (owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *owner, result.owner, reason))
+  if (owner && !ons::parse_owner_to_generic_owner(wallet.nettype(), *owner, result.owner, reason))
       return {};
 
-  if (backup_owner && !lns::parse_owner_to_generic_owner(wallet.nettype(), *backup_owner, result.backup_owner, reason))
+  if (backup_owner && !ons::parse_owner_to_generic_owner(wallet.nettype(), *backup_owner, result.backup_owner, reason))
       return {};
 
   {
-    cryptonote::rpc::LNS_NAMES_TO_OWNERS::request request = {};
+    cryptonote::rpc::ONS_NAMES_TO_OWNERS::request request = {};
     {
       auto &request_entry = request.entries.emplace_back();
       request_entry.name_hash = oxenmq::to_base64(tools::view_guts(result.name_hash));
-      request_entry.types.push_back(lns::db_mapping_type(type));
+      request_entry.types.push_back(ons::db_mapping_type(type));
     }
 
-    auto [success, response_] = wallet.lns_names_to_owners(request);
+    auto [success, response_] = wallet.ons_names_to_owners(request);
     if (!response)
       response = &response_;
     else
       *response = std::move(response_);
     if (!success)
     {
-      if (reason) *reason = "Failed to query previous owner for LNS entry: communication with daemon failed";
+      if (reason) *reason = "Failed to query previous owner for ONS entry: communication with daemon failed";
       return result;
     }
 
@@ -8761,11 +8783,11 @@ static lns_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const 
       }
     }
 
-    if (txtype == lns::lns_tx_type::update && make_signature)
+    if (txtype == ons::ons_tx_type::update && make_signature)
     {
       if (response->empty())
       {
-        if (reason) *reason = "Signature requested when preparing LNS TX but record to update does not exist";
+        if (reason) *reason = "Signature requested when preparing ONS TX but record to update does not exist";
         return result;
       }
 
@@ -8775,20 +8797,20 @@ static lns_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const 
       auto& rbackup_owner = response->front().backup_owner;
       bool curr_owner        = cryptonote::get_account_address_from_str(curr_owner_parsed, wallet.nettype(), rowner);
       bool curr_backup_owner = rbackup_owner && cryptonote::get_account_address_from_str(curr_backup_owner_parsed, wallet.nettype(), *rbackup_owner);
-      if (!try_generate_lns_signature(wallet, rowner, owner, backup_owner, result))
+      if (!try_generate_ons_signature(wallet, rowner, owner, backup_owner, result))
       {
-        if (!rbackup_owner || !try_generate_lns_signature(wallet, *rbackup_owner, owner, backup_owner, result))
+        if (!rbackup_owner || !try_generate_ons_signature(wallet, *rbackup_owner, owner, backup_owner, result))
         {
           if (reason)
           {
-            *reason = "Signature requested when preparing LNS TX, but this wallet is not the owner of the record owner=" + rowner;
+            *reason = "Signature requested when preparing ONS TX, but this wallet is not the owner of the record owner=" + rowner;
             if (rbackup_owner) *reason += ", backup_owner=" + *rbackup_owner;
           }
           return result;
         }
       }
     }
-    else if (txtype == lns::lns_tx_type::renew)
+    else if (txtype == ons::ons_tx_type::renew)
     {
       if (response->empty())
       {
@@ -8802,7 +8824,7 @@ static lns_prepared_args prepare_tx_extra_oxen_name_system_values(wallet2 const 
   return result;
 }
 
-std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping_type type,
+std::vector<wallet2::pending_tx> wallet2::ons_create_buy_mapping_tx(ons::mapping_type type,
                                                                     std::string const *owner,
                                                                     std::string const *backup_owner,
                                                                     std::string name,
@@ -8812,11 +8834,11 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping
                                                                     uint32_t account_index,
                                                                     std::set<uint32_t> subaddr_indices)
 {
-  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
+  std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> response;
   constexpr bool make_signature = false;
-  lns_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, &value, owner, backup_owner, make_signature, lns::lns_tx_type::buy, account_index, reason, &response);
+  ons_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, &value, owner, backup_owner, make_signature, ons::ons_tx_type::buy, account_index, reason, &response);
   if (!owner)
-    prepared_args.owner = lns::make_monero_owner(get_subaddress({account_index, 0}), account_index != 0);
+    prepared_args.owner = ons::make_monero_owner(get_subaddress({account_index, 0}), account_index != 0);
 
   if (!prepared_args)
     return {};
@@ -8838,7 +8860,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping
     return {};
   }
 
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, type);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, type);
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
                                       0 /*unlock_at_block*/,
@@ -8850,7 +8872,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_buy_mapping_tx(lns::mapping
   return result;
 }
 
-std::optional<lns::mapping_type> wallet2::lns_validate_type(std::string_view type, lns::lns_tx_type lns_action, std::string *reason)
+std::optional<ons::mapping_type> wallet2::ons_validate_type(std::string_view type, ons::ons_tx_type ons_action, std::string *reason)
 {
   std::optional<uint8_t> hf_version = get_hard_fork_version();
   if (!hf_version)
@@ -8858,25 +8880,25 @@ std::optional<lns::mapping_type> wallet2::lns_validate_type(std::string_view typ
     if (reason) *reason = ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
     return std::nullopt;
   }
-  lns::mapping_type mapping_type;
-  if (!lns::validate_mapping_type(type, *hf_version, lns_action, &mapping_type, reason))
+  ons::mapping_type mapping_type;
+  if (!ons::validate_mapping_type(type, *hf_version, ons_action, &mapping_type, reason))
     return std::nullopt;
 
   return mapping_type;
 }
 
-std::vector<wallet2::pending_tx> wallet2::lns_create_renewal_tx(
-    lns::mapping_type type,
+std::vector<wallet2::pending_tx> wallet2::ons_create_renewal_tx(
+    ons::mapping_type type,
     std::string name,
     std::string *reason,
     uint32_t priority,
     uint32_t account_index,
     std::set<uint32_t> subaddr_indices,
-    std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response
+    std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> *response
     )
 {
   constexpr bool make_signature = false;
-  lns_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, nullptr, nullptr, nullptr, make_signature, lns::lns_tx_type::renew, account_index, reason, response);
+  ons_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, nullptr, nullptr, nullptr, make_signature, ons::ons_tx_type::renew, account_index, reason, response);
 
   if (!prepared_args)
     return {};
@@ -8895,7 +8917,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_renewal_tx(
     return {};
   }
 
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, type);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, type);
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
                                       0 /*unlock_at_block*/,
@@ -8908,7 +8930,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_renewal_tx(
 }
 
 
-std::vector<wallet2::pending_tx> wallet2::lns_create_update_mapping_tx(lns::mapping_type type,
+std::vector<wallet2::pending_tx> wallet2::ons_create_update_mapping_tx(ons::mapping_type type,
                                                                        std::string name,
                                                                        std::string const *value,
                                                                        std::string const *owner,
@@ -8918,16 +8940,16 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_update_mapping_tx(lns::mapp
                                                                        uint32_t priority,
                                                                        uint32_t account_index,
                                                                        std::set<uint32_t> subaddr_indices,
-                                                                       std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> *response)
+                                                                       std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> *response)
 {
   if (!value && !owner && !backup_owner)
   {
-    if (reason) *reason = "Value, owner and backup owner are not specified. Atleast one field must be specified for updating the LNS record";
+    if (reason) *reason = "Value, owner and backup owner are not specified. Atleast one field must be specified for updating the ONS record";
     return {};
   }
 
   bool make_signature = signature == nullptr;
-  lns_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, value, owner, backup_owner, make_signature, lns::lns_tx_type::update, account_index, reason, response);
+  ons_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, priority, name, value, owner, backup_owner, make_signature, ons::ons_tx_type::update, account_index, reason, response);
   if (!prepared_args) return {};
 
   if (!make_signature)
@@ -8954,7 +8976,7 @@ std::vector<wallet2::pending_tx> wallet2::lns_create_update_mapping_tx(lns::mapp
     if (reason) *reason = ERR_MSG_NETWORK_VERSION_QUERY_FAILED;
     return {};
   }
-  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, lns::mapping_type::update_record_internal);
+  oxen_construct_tx_params tx_params = wallet2::construct_params(*hf_version, txtype::oxen_name_system, priority, 0, ons::mapping_type::update_record_internal);
 
   auto result = create_transactions_2({} /*dests*/,
                                       CRYPTONOTE_DEFAULT_TX_MIXIN,
@@ -8993,23 +9015,23 @@ bool wallet2::unlock_keys_file()
   return true;
 }
 
-bool wallet2::lns_make_update_mapping_signature(lns::mapping_type type,
+bool wallet2::ons_make_update_mapping_signature(ons::mapping_type type,
                                                 std::string name,
                                                 std::string const *value,
                                                 std::string const *owner,
                                                 std::string const *backup_owner,
-                                                lns::generic_signature &signature,
+                                                ons::generic_signature &signature,
                                                 uint32_t account_index,
                                                 std::string *reason)
 {
-  std::vector<cryptonote::rpc::LNS_NAMES_TO_OWNERS::response_entry> response;
+  std::vector<cryptonote::rpc::ONS_NAMES_TO_OWNERS::response_entry> response;
   constexpr bool make_signature = true;
-  lns_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, tx_priority_unimportant, name, value, owner, backup_owner, make_signature, lns::lns_tx_type::update, account_index, reason, &response);
+  ons_prepared_args prepared_args = prepare_tx_extra_oxen_name_system_values(*this, type, tx_priority_unimportant, name, value, owner, backup_owner, make_signature, ons::ons_tx_type::update, account_index, reason, &response);
   if (!prepared_args) return false;
 
   if (prepared_args.prev_txid == crypto::null_hash)
   {
-    if (reason) *reason = "name=\"" + name + std::string("\" does not have a corresponding LNS record, the mapping is available for purchase, update signature is not required.");
+    if (reason) *reason = "name=\"" + name + std::string("\" does not have a corresponding ONS record, the mapping is available for purchase, update signature is not required.");
     return false;
   }
 
@@ -9074,14 +9096,14 @@ bool wallet2::tx_add_fake_output(std::vector<std::vector<tools::wallet2::get_out
 }
 
 void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, const std::vector<size_t> &selected_transfers, size_t fake_outputs_count) {
-  
+
   MDEBUG("LIGHTWALLET - Getting random outs");
-      
+
   light_rpc::GET_RANDOM_OUTS::request oreq{};
   light_rpc::GET_RANDOM_OUTS::response ores{};
-  
+
   size_t light_wallet_requested_outputs_count = (size_t)((fake_outputs_count + 1) * 1.5 + 1);
-  
+
   // Amounts to ask for
   // MyMonero api handle amounts and fees as strings
   for(size_t idx: selected_transfers) {
@@ -9095,7 +9117,7 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
   bool r = invoke_http<light_rpc::GET_RANDOM_OUTS>(oreq, ores);
   THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_random_outs");
   THROW_WALLET_EXCEPTION_IF(ores.amount_outs.empty() , error::wallet_internal_error, "No outputs received from light wallet node. Error: " + ores.Error);
-  
+
   // Check if we got enough outputs for each amount
   for(auto& out: ores.amount_outs) {
     const uint64_t out_amount = boost::lexical_cast<uint64_t>(out.amount);
@@ -9106,32 +9128,32 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
   MDEBUG("selected transfers size: " << selected_transfers.size());
 
   for(size_t idx: selected_transfers)
-  { 
+  {
     // Create new index
     outs.push_back(std::vector<get_outs_entry>());
     outs.back().reserve(fake_outputs_count + 1);
-    
+
     // add real output first
     const transfer_details &td = m_transfers[idx];
     const uint64_t amount = td.is_rct() ? 0 : td.amount();
     outs.back().push_back(std::make_tuple(td.m_global_output_index, td.get_public_key(), rct::commit(td.amount(), td.m_mask)));
     MDEBUG("added real output " << tools::type_to_hex(td.get_public_key()));
-    
+
     // Even if the lightwallet server returns random outputs, we pick them randomly.
     std::vector<size_t> order;
     order.resize(light_wallet_requested_outputs_count);
     for (size_t n = 0; n < order.size(); ++n)
       order[n] = n;
     std::shuffle(order.begin(), order.end(), crypto::random_device{});
-    
-    
+
+
     LOG_PRINT_L2("Looking for " << (fake_outputs_count+1) << " outputs with amounts " << print_money(td.is_rct() ? 0 : td.amount()));
     MDEBUG("OUTS SIZE: " << outs.back().size());
     for (size_t o = 0; o < light_wallet_requested_outputs_count && outs.back().size() < fake_outputs_count + 1; ++o)
     {
       // Random pick
       size_t i = order[o];
-             
+
       // Find which random output key to use
       bool found_amount = false;
       size_t amount_key;
@@ -9145,7 +9167,7 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
       THROW_WALLET_EXCEPTION_IF(!found_amount , error::wallet_internal_error, "Outputs for amount " + boost::lexical_cast<std::string>(ores.amount_outs[amount_key].amount) + " not found" );
 
       LOG_PRINT_L2("Index " << i << "/" << light_wallet_requested_outputs_count << ": idx " << ores.amount_outs[amount_key].outputs[i].global_index << " (real " << td.m_global_output_index << "), unlocked " << "(always in light)" << ", key " << ores.amount_outs[0].outputs[i].public_key);
-      
+
       // Convert light wallet string data to proper data structures
       crypto::public_key tx_public_key;
       rct::key mask{}; // decrypted mask - not used here
@@ -9156,7 +9178,7 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
       const uint64_t global_index = ores.amount_outs[amount_key].outputs[i].global_index;
       if(!light_wallet_parse_rct_str(ores.amount_outs[amount_key].outputs[i].rct, tx_public_key, 0, mask, rct_commit, false))
         rct_commit = rct::zeroCommit(td.amount());
-      
+
       if (tx_add_fake_output(outs, global_index, tx_public_key, rct_commit, td.m_global_output_index, true)) {
         MDEBUG("added fake output " << ores.amount_outs[amount_key].outputs[i].public_key);
         MDEBUG("index " << global_index);
@@ -9164,7 +9186,7 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
     }
 
     THROW_WALLET_EXCEPTION_IF(outs.back().size() < fake_outputs_count + 1 , error::wallet_internal_error, "Not enough fake outputs found" );
-    
+
     // Real output is the first. Shuffle outputs
     MTRACE(outs.back().size() << " outputs added. Sorting outputs by index:");
     std::sort(outs.back().begin(), outs.back().end(), [](const get_outs_entry &a, const get_outs_entry &b) { return std::get<0>(a) < std::get<0>(b); });
@@ -9858,7 +9880,7 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
   // throw if total amount overflows uint64_t
   for(auto& dt: dsts)
   {
-    THROW_WALLET_EXCEPTION_IF(0 == dt.amount && (tx_params.tx_type != txtype::oxen_name_system), error::zero_destination);
+    THROW_WALLET_EXCEPTION_IF(0 == dt.amount && !(tx_params.tx_type == txtype::oxen_name_system || tx_params.tx_type == txtype::key_image_unlock), error::zero_destination);
     needed_money += dt.amount;
     LOG_PRINT_L2("transfer: adding " << print_money(dt.amount) << ", for a total of " << print_money (needed_money));
     THROW_WALLET_EXCEPTION_IF(needed_money < dt.amount, error::tx_sum_overflow, dsts, fee, m_nettype);
@@ -9955,9 +9977,9 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
     src.rct = td.is_rct();
     //paste mixin transaction
 
-    THROW_WALLET_EXCEPTION_IF(outs.size() < out_index + 1 ,  error::wallet_internal_error, "outs.size() < out_index + 1"); 
+    THROW_WALLET_EXCEPTION_IF(outs.size() < out_index + 1 ,  error::wallet_internal_error, "outs.size() < out_index + 1");
     THROW_WALLET_EXCEPTION_IF(outs[out_index].size() < fake_outputs_count ,  error::wallet_internal_error, "fake_outputs_count > random outputs found");
-      
+
     typedef cryptonote::tx_source_entry::output_entry tx_output_entry;
     for (size_t n = 0; n < fake_outputs_count + 1; ++n)
     {
@@ -10038,7 +10060,7 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
 
   if (update_splitted_dsts)
   {
-    // NOTE: If LNS, there's already a dummy destination entry in there that
+    // NOTE: If ONS, there's already a dummy destination entry in there that
     // we placed in (for fake calculating the TX fees and parts) that we
     // repurpose for change after the fact.
     if (tx_params.tx_type == txtype::oxen_name_system)
@@ -10326,7 +10348,7 @@ bool wallet2::light_wallet_login(bool &new_address)
   // Always create account if it doesn't exist.
   request.create_account = true;
   bool connected = invoke_http<light_rpc::LOGIN>(request, response);
-  // MyMonero doesn't send any status message. OpenMonero does. 
+  // MyMonero doesn't send any status message. OpenMonero does.
   m_light_wallet_connected  = connected && (response.status.empty() || response.status == "success");
   new_address = response.new_address;
   MDEBUG("Status: " << response.status);
@@ -10358,10 +10380,10 @@ bool wallet2::light_wallet_import_wallet_request(light_rpc::IMPORT_WALLET_REQUES
 void wallet2::light_wallet_get_unspent_outs()
 {
   MDEBUG("Getting unspent outs");
-  
+
   light_rpc::GET_UNSPENT_OUTS::request oreq{};
   light_rpc::GET_UNSPENT_OUTS::response ores{};
-  
+
   oreq.amount = "0";
   oreq.address = get_account().get_public_address_str(m_nettype);
   oreq.view_key = tools::type_to_hex(get_account().get_keys().m_view_secret_key);
@@ -10375,22 +10397,22 @@ void wallet2::light_wallet_get_unspent_outs()
   bool r = invoke_http<light_rpc::GET_UNSPENT_OUTS>(oreq, ores);
   THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_unspent_outs");
   THROW_WALLET_EXCEPTION_IF(ores.status == "error", error::wallet_internal_error, ores.reason);
-  
+
   m_light_wallet_per_kb_fee = ores.per_kb_fee;
-  
+
   std::unordered_map<crypto::hash,bool> transfers_txs;
   for(const auto &t: m_transfers)
     transfers_txs.emplace(t.m_txid,t.m_spent);
-  
+
   MDEBUG("FOUND " << ores.outputs.size() <<" outputs");
-  
+
   // return if no outputs found
   if(ores.outputs.empty())
     return;
-  
+
   // Clear old outputs
   m_transfers.clear();
-  
+
   for (const auto &o: ores.outputs) {
     bool spent = false;
     bool add_transfer = true;
@@ -10398,7 +10420,7 @@ void wallet2::light_wallet_get_unspent_outs()
     crypto::public_key tx_public_key{};
     THROW_WALLET_EXCEPTION_IF(o.tx_pub_key.size() != 64 || !oxenmq::is_hex(o.tx_pub_key), error::wallet_internal_error, "Invalid tx_pub_key field");
     tools::hex_to_type(o.tx_pub_key, tx_public_key);
-    
+
     for (const std::string &ski: o.spend_key_images) {
       spent = false;
 
@@ -10414,7 +10436,7 @@ void wallet2::light_wallet_get_unspent_outs()
       }
     }
 
-    // Check if tx already exists in m_transfers. 
+    // Check if tx already exists in m_transfers.
     crypto::hash txid;
     crypto::public_key tx_pub_key;
     crypto::public_key public_key;
@@ -10424,7 +10446,7 @@ void wallet2::light_wallet_get_unspent_outs()
     tools::hex_to_type(o.tx_hash, txid);
     tools::hex_to_type(o.public_key, public_key);
     tools::hex_to_type(o.tx_pub_key, tx_pub_key);
-    
+
     for(auto &t: m_transfers){
       if(t.get_public_key() == public_key) {
         t.m_spent = spent;
@@ -10432,20 +10454,20 @@ void wallet2::light_wallet_get_unspent_outs()
         break;
       }
     }
-    
+
     if(!add_transfer)
       continue;
-    
+
     m_transfers.emplace_back();
     transfer_details& td = m_transfers.back();
-    
+
     td.m_block_height = o.height;
     td.m_global_output_index = o.global_index;
     td.m_txid = txid;
-     
+
     // Add to extra
     add_tx_extra<tx_extra_pub_key>(td.m_tx, tx_pub_key);
-    
+
     td.m_key_image = unspent_key_image;
     td.m_key_image_known = !m_watch_only && !m_multisig;
     td.m_key_image_request = false;
@@ -10459,12 +10481,12 @@ void wallet2::light_wallet_get_unspent_outs()
     tx_out txout;
     txout.target = txout_to_key(public_key);
     txout.amount = td.m_amount;
-    
+
     td.m_tx.vout.resize(td.m_internal_output_index + 1);
     td.m_tx.vout[td.m_internal_output_index] = txout;
 
     THROW_WALLET_EXCEPTION_IF(true, error::wallet_internal_error, "Light wallet multiple output unlock time not supported yet");
-    
+
     // Add unlock time and coinbase bool got from get_address_txs api call
     std::unordered_map<crypto::hash,address_tx>::const_iterator found = m_light_wallet_address_txs.find(txid);
     THROW_WALLET_EXCEPTION_IF(found == m_light_wallet_address_txs.end(), error::wallet_internal_error, "Lightwallet: tx not found in m_light_wallet_address_txs");
@@ -10512,9 +10534,9 @@ void wallet2::light_wallet_get_unspent_outs()
 bool wallet2::light_wallet_get_address_info(light_rpc::GET_ADDRESS_INFO::response &response)
 {
   MTRACE(__FUNCTION__);
-  
+
   light_rpc::GET_ADDRESS_INFO::request request{};
-  
+
   request.address = get_account().get_public_address_str(m_nettype);
   request.view_key = tools::type_to_hex(get_account().get_keys().m_view_secret_key);
   bool r = invoke_http<light_rpc::GET_ADDRESS_INFO>(request, response);
@@ -10526,22 +10548,22 @@ bool wallet2::light_wallet_get_address_info(light_rpc::GET_ADDRESS_INFO::respons
 void wallet2::light_wallet_get_address_txs()
 {
   MDEBUG("Refreshing light wallet");
-  
+
   light_rpc::GET_ADDRESS_TXS::request ireq{};
   light_rpc::GET_ADDRESS_TXS::response ires{};
-  
+
   ireq.address = get_account().get_public_address_str(m_nettype);
   ireq.view_key = tools::type_to_hex(get_account().get_keys().m_view_secret_key);
   bool r = invoke_http<light_rpc::GET_ADDRESS_TXS>(ireq, ires);
   THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_address_txs");
-  //OpenMonero sends status=success, Mymonero doesn't. 
+  //OpenMonero sends status=success, Mymonero doesn't.
   THROW_WALLET_EXCEPTION_IF((!ires.status.empty() && ires.status != "success"), error::no_connection_to_daemon, "get_address_txs");
 
-  
+
   // Abort if no transactions
   if(ires.transactions.empty())
     return;
-  
+
   // Create searchable vectors
   std::vector<crypto::hash> payments_txs;
   for(const auto &p: m_payments)
@@ -10575,13 +10597,13 @@ void wallet2::light_wallet_get_address_txs()
       }
     }
 
-    // Do not add tx if empty. 
+    // Do not add tx if empty.
     if(total_sent == 0 && total_received == 0)
       continue;
-    
+
     crypto::hash payment_id = null_hash;
     crypto::hash tx_hash;
-    
+
     THROW_WALLET_EXCEPTION_IF(t.payment_id.size() != 64 || !oxenmq::is_hex(t.payment_id), error::wallet_internal_error, "Invalid payment_id field");
     THROW_WALLET_EXCEPTION_IF(t.hash.size() != 64 || !oxenmq::is_hex(t.hash), error::wallet_internal_error, "Invalid hash field");
     tools::hex_to_type(t.payment_id, payment_id);
@@ -10616,8 +10638,8 @@ void wallet2::light_wallet_get_address_txs()
       payment.m_unlock_time  = t.unlock_time;
       payment.m_timestamp = t.timestamp;
       payment.m_type = t.coinbase ? wallet::pay_type::miner : wallet::pay_type::in; // TODO(oxen): Only accounts for miner, but wait, do we even care about this code? Looks like openmonero code
-        
-      if (t.mempool) {   
+
+      if (t.mempool) {
         if (std::find(unconfirmed_payments_txs.begin(), unconfirmed_payments_txs.end(), tx_hash) == unconfirmed_payments_txs.end()) {
           pool_txs.push_back(tx_hash);
           // assume false as we don't get that info from the light wallet server
@@ -10665,8 +10687,8 @@ void wallet2::light_wallet_get_address_txs()
         auto confirmed_tx = m_confirmed_txs.find(tx_hash);
         if(confirmed_tx == m_confirmed_txs.end()) {
           // tx is added to m_unconfirmed_txs - move to confirmed
-          if(m_unconfirmed_txs.find(tx_hash) != m_unconfirmed_txs.end()) 
-          { 
+          if(m_unconfirmed_txs.find(tx_hash) != m_unconfirmed_txs.end())
+          {
             process_unconfirmed(tx_hash, dummy_tx, t.height);
           }
           // Tx sent by another wallet instance
@@ -10684,7 +10706,7 @@ void wallet2::light_wallet_get_address_txs()
           if (0 != m_callback)
           {
             m_callback->on_lw_money_spent(t.height, tx_hash, amount_sent);
-          } 
+          }
         }
         // If not new - check the amount and update if necessary.
         // when sending a tx to same wallet the receiving amount has to be credited
@@ -10699,7 +10721,7 @@ void wallet2::light_wallet_get_address_txs()
           }
         }
       }
-    }    
+    }
   }
   // TODO: purge old unconfirmed_txs
   remove_obsolete_pool_txs(pool_txs);
@@ -10754,7 +10776,7 @@ bool wallet2::light_wallet_key_image_is_ours(const crypto::key_image& key_image,
   // Not in cache - calculate key image
   crypto::key_image calculated_key_image;
   cryptonote::keypair in_ephemeral;
-  
+
   // Subaddresses aren't supported in mymonero/openmonero yet. Roll out the original scheme:
   //   compute D = a*R
   //   compute P = Hs(D || i)*G + B
@@ -10806,14 +10828,16 @@ static constexpr uint64_t BURN_FEE_PLACEHOLDER = (1ULL << (6*7)) - 1;
 // usable balance.
 std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra_base, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, oxen_construct_tx_params &tx_params)
 {
+
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
   std::unique_lock hwdev_lock{hwdev};
   hw::mode_resetter rst{hwdev};
 
-  bool const is_lns_tx = (tx_params.tx_type == txtype::oxen_name_system);
+  bool const is_ons_tx = (tx_params.tx_type == txtype::oxen_name_system);
+  bool const is_unstake_tx = (tx_params.tx_type == txtype::key_image_unlock);
   auto original_dsts = dsts;
-  if (is_lns_tx)
+  if (is_ons_tx)
   {
     THROW_WALLET_EXCEPTION_IF(dsts.size() != 0, error::wallet_internal_error, "oxen name system txs must not have any destinations set, has: " + std::to_string(dsts.size()));
     dsts.emplace_back(0, account_public_address{} /*address*/, false /*is_subaddress*/); // NOTE: Create a dummy dest that gets repurposed into the change output.
@@ -10903,14 +10927,16 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   needed_money = 0;
   for(auto& dt: dsts)
   {
-    THROW_WALLET_EXCEPTION_IF(0 == dt.amount && !is_lns_tx, error::zero_destination);
+    THROW_WALLET_EXCEPTION_IF(0 == dt.amount && !(is_ons_tx || is_unstake_tx), error::zero_destination);
+
     needed_money += dt.amount;
     LOG_PRINT_L2("transfer: adding " << print_money(dt.amount) << ", for a total of " << print_money (needed_money));
     THROW_WALLET_EXCEPTION_IF(needed_money < dt.amount, error::tx_sum_overflow, dsts, 0, m_nettype);
   }
 
+
   // throw if attempting a transaction with no money
-  THROW_WALLET_EXCEPTION_IF(needed_money == 0 && !is_lns_tx, error::zero_destination);
+  THROW_WALLET_EXCEPTION_IF(needed_money == 0 && !(is_ons_tx || is_unstake_tx), error::zero_destination);
 
   std::map<uint32_t, std::pair<uint64_t, std::pair<uint64_t, uint64_t>>> unlocked_balance_per_subaddr = unlocked_balance_per_subaddress(subaddr_account, false);
   std::map<uint32_t, uint64_t> balance_per_subaddr = balance_per_subaddress(subaddr_account, false);
@@ -10924,7 +10950,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // early out if we know we can't make it anyway
   // we could also check for being within FEE_PER_KB, but if the fee calculation
   // ever changes, this might be missed, so let this go through
-  const uint64_t min_outputs = tx_params.tx_type == cryptonote::txtype::oxen_name_system ? 1 : 2; // if lns, only request the change output
+  const uint64_t min_outputs = tx_params.tx_type == cryptonote::txtype::oxen_name_system ? 1 : 2; // if ons, only request the change output
   {
     uint64_t min_fee = (
         base_fee.first * estimate_rct_tx_size(1, fake_outs_count, min_outputs, extra.size(), clsag) +
@@ -11077,7 +11103,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   unsigned int original_output_index = 0;
   std::vector<size_t>* unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
   std::vector<size_t>* unused_dust_indices      = &unused_dust_indices_per_subaddr[0].second;
-  
+
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
   while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
     TX &tx = txes.back();
@@ -11101,11 +11127,11 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
       idx = pop_back(preferred_inputs);
       pop_if_present(*unused_transfers_indices, idx);
       pop_if_present(*unused_dust_indices, idx);
-    } else if ((dsts.empty() || (dsts[0].amount == 0 && !is_lns_tx)) && !adding_fee) {
-      // NOTE: A LNS tx sets dsts[0].amount to 0, but this branch is for the
-      // 2 inputs/2 outputs. We only have 1 output as LNS transactions are
+    } else if ((dsts.empty() || (dsts[0].amount == 0 && !is_ons_tx)) && !adding_fee) {
+      // NOTE: A ONS tx sets dsts[0].amount to 0, but this branch is for the
+      // 2 inputs/2 outputs. We only have 1 output as ONS transactions are
       // distinguishable, so we actually want the last branch which uses unused
-      // outputs in the wallet to pay off the LNS fee.
+      // outputs in the wallet to pay off the ONS fee.
 
       // the "make rct txes 2/2" case - we pick a small value output to "clean up" the wallet too
       std::vector<size_t> indices = get_only_rct(*unused_dust_indices, *unused_transfers_indices);
@@ -11287,7 +11313,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     }
 
 skip_tx:
-    // if unused_*_indices is empty while unused_*_indices_per_subaddr has multiple elements, and if we still have something to pay, 
+    // if unused_*_indices is empty while unused_*_indices_per_subaddr has multiple elements, and if we still have something to pay,
     // pop front of unused_*_indices_per_subaddr and have unused_*_indices point to the front of unused_*_indices_per_subaddr
     if ((!dsts.empty() && dsts[0].amount > 0) || adding_fee)
     {
@@ -11321,7 +11347,7 @@ skip_tx:
     // fee percent)
     if (burning)
     {
-      tx_params.burn_fixed = burn_fixed + tx.needed_fee * burn_percent / fee_percent;
+      tx_params.burn_fixed = burn_fixed + (tx.needed_fee - burn_fixed) * burn_percent / fee_percent;
       // Make sure we can't enlarge the tx because that could make it invalid:
       THROW_WALLET_EXCEPTION_IF(tx_params.burn_fixed > BURN_FEE_PLACEHOLDER, error::wallet_internal_error, "attempt to burn a larger amount than is internally supported");
     }
@@ -11687,7 +11713,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
 
   LOG_PRINT_L1("Done creating " << txes.size() << " transactions, " << print_money(accumulated_fee) <<
     " total fee, " << print_money(accumulated_change) << " total change");
- 
+
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
   for (auto &tx : txes)
   {
@@ -12713,7 +12739,7 @@ std::string wallet2::get_reserve_proof(const std::optional<std::pair<uint32_t, u
     proof.key_image = td.m_key_image;
     subaddr_indices.insert(td.m_subaddr_index);
 
-    // get tx pub key 
+    // get tx pub key
     const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(td.m_tx, td.m_pk_index);
     THROW_WALLET_EXCEPTION_IF(tx_pub_key == crypto::null_pkey, error::wallet_internal_error, "The tx public key isn't found");
     const std::vector<crypto::public_key> additional_tx_pub_keys = get_additional_tx_pub_keys_from_extra(td.m_tx);
@@ -13011,19 +13037,19 @@ std::vector<rpc::GET_SERVICE_NODES::response::entry> wallet2::list_current_stake
   return service_node_states;
 }
 
-void wallet2::set_lns_cache_record(wallet2::lns_detail detail)
+void wallet2::set_ons_cache_record(wallet2::ons_detail detail)
 {
-  lns_records_cache[detail.hashed_name] = std::move(detail);
+  ons_records_cache[detail.hashed_name] = std::move(detail);
 }
 
-void wallet2::delete_lns_cache_record(const std::string& hashed_name)
+void wallet2::delete_ons_cache_record(const std::string& hashed_name)
 {
-  lns_records_cache.erase(hashed_name);
+  ons_records_cache.erase(hashed_name);
 }
 
-std::unordered_map<std::string, wallet2::lns_detail> wallet2::get_lns_cache()
+std::unordered_map<std::string, wallet2::ons_detail> wallet2::get_ons_cache()
 {
-  return lns_records_cache;
+  return ons_records_cache;
 }
 
 void wallet2::set_tx_note(const crypto::hash &txid, const std::string &note)
@@ -13416,7 +13442,7 @@ uint64_t wallet2::import_key_images_from_file(const fs::path& filename, uint64_t
     std::memcpy(&pair.first,  &data[headerlen + key_image_offset], sizeof(key_image));
     std::memcpy(&pair.second, &data[headerlen + signature_offset], sizeof(signature));
   }
-  
+
   return import_key_images(ski, offset, spent, unspent);
 }
 
@@ -13506,7 +13532,7 @@ uint64_t wallet2::import_key_images(const std::vector<std::pair<crypto::key_imag
     }
   }
   std::unordered_set<crypto::hash> spent_txids;   // For each spent key image, search for a tx in m_transfers that uses it as input.
-  std::vector<size_t> swept_transfers;            // If such a spending tx wasn't found in m_transfers, this means the spending tx 
+  std::vector<size_t> swept_transfers;            // If such a spending tx wasn't found in m_transfers, this means the spending tx
                                                   // was created by sweep_all, so we can't know the spent height and other detailed info.
   std::unordered_map<crypto::key_image, crypto::hash> spent_key_images;
 
@@ -14543,7 +14569,7 @@ uint64_t wallet2::get_blockchain_height_by_date(uint16_t year, uint8_t month, ui
     uint64_t timestamp_max = blk_max.timestamp;
     if (!(timestamp_min <= timestamp_mid && timestamp_mid <= timestamp_max))
     {
-      // the timestamps are not in the chronological order. 
+      // the timestamps are not in the chronological order.
       // assuming they're sufficiently close to each other, simply return the smallest height
       return std::min({height_min, height_mid, height_max});
     }

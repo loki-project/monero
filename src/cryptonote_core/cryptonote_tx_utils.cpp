@@ -134,7 +134,7 @@ namespace cryptonote
   {
     return hf_version >= network_version_17         ? FOUNDATION_REWARD_HF17 :
            hf_version >= network_version_16_pulse   ? FOUNDATION_REWARD_HF15 + CHAINFLIP_LIQUIDITY_HF16 :
-           hf_version >= network_version_15_lns     ? FOUNDATION_REWARD_HF15 :
+           hf_version >= network_version_15_ons     ? FOUNDATION_REWARD_HF15 :
            base_reward / 20;
   }
 
@@ -197,7 +197,7 @@ namespace cryptonote
   uint64_t service_node_reward_formula(uint64_t base_reward, uint8_t hard_fork_version)
   {
     return
-      hard_fork_version >= network_version_15_lns          ? SN_REWARD_HF15 :
+      hard_fork_version >= network_version_15_ons          ? SN_REWARD_HF15 :
       hard_fork_version >= network_version_9_service_nodes ? base_reward / 2 : // 50% of base reward up until HF15's fixed payout
       0;
   }
@@ -447,7 +447,7 @@ namespace cryptonote
     }
 
     uint64_t expected_amount = 0;
-    if (hard_fork_version <= cryptonote::network_version_15_lns)
+    if (hard_fork_version <= cryptonote::network_version_15_ons)
     {
       // NOTE: Use the amount actually paid out when we split the service node
       // reward (across up to 4 recipients) which may actually pay out less than
@@ -561,6 +561,7 @@ namespace cryptonote
 
     return true;
   }
+
 
   crypto::public_key get_destination_view_key_pub(const std::vector<tx_destination_entry> &destinations, const std::optional<cryptonote::tx_destination_entry>& change_addr)
   {

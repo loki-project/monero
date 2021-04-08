@@ -268,9 +268,10 @@ namespace cryptonote::rpc {
     REPORT_PEER_SS_STATUS::response                     invoke(REPORT_PEER_SS_STATUS::request&& req, rpc_context context);
     TEST_TRIGGER_P2P_RESYNC::response                   invoke(TEST_TRIGGER_P2P_RESYNC::request&& req, rpc_context context);
     TEST_TRIGGER_UPTIME_PROOF::response                 invoke(TEST_TRIGGER_UPTIME_PROOF::request&& req, rpc_context context);
-    LNS_NAMES_TO_OWNERS::response                       invoke(LNS_NAMES_TO_OWNERS::request&& req, rpc_context context);
-    LNS_OWNERS_TO_NAMES::response                       invoke(LNS_OWNERS_TO_NAMES::request&& req, rpc_context context);
-    LNS_RESOLVE::response                               invoke(LNS_RESOLVE::request&& req, rpc_context context);
+    ONS_NAMES_TO_OWNERS::response                       invoke(ONS_NAMES_TO_OWNERS::request&& req, rpc_context context);
+    ONS_OWNERS_TO_NAMES::response                       invoke(ONS_OWNERS_TO_NAMES::request&& req, rpc_context context);
+    ONS_RESOLVE::response                               invoke(ONS_RESOLVE::request&& req, rpc_context context);
+    ONS_RESOLVE_ADDRESS::response                       invoke(ONS_RESOLVE_ADDRESS::request&& req, rpc_context context);
     FLUSH_CACHE::response                               invoke(FLUSH_CACHE::request&& req, rpc_context);
 
 #if defined(OXEN_ENABLE_INTEGRATION_TEST_HOOKS)

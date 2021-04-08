@@ -130,7 +130,7 @@ namespace cryptonote { namespace rpc {
     template <typename RPC>
     struct reg_helper<RPC, std::enable_if_t<std::is_base_of<BINARY, RPC>::value>> {
       using Request = typename RPC::request;
-      Request load(rpc_request& request) { 
+      Request load(rpc_request& request) {
         Request req{};
         std::string_view data;
         if (auto body = request.body_view())
@@ -773,42 +773,42 @@ namespace cryptonote { namespace rpc {
         for (auto& proof : x.proofs) entry.locked_key_images.emplace_back(tools::type_to_hex(proof.key_image));
       }
       void operator()(const tx_extra_tx_key_image_unlock& x) { entry.key_image_unlock = tools::type_to_hex(x.key_image); }
-      void _load_owner(std::optional<std::string>& entry, const lns::generic_owner& owner) {
+      void _load_owner(std::optional<std::string>& entry, const ons::generic_owner& owner) {
         if (!owner)
           return;
-        if (owner.type == lns::generic_owner_sig_type::monero)
+        if (owner.type == ons::generic_owner_sig_type::monero)
           entry = get_account_address_as_str(nettype, owner.wallet.is_subaddress, owner.wallet.address);
-        else if (owner.type == lns::generic_owner_sig_type::ed25519)
+        else if (owner.type == ons::generic_owner_sig_type::ed25519)
           entry = tools::type_to_hex(owner.ed25519);
       }
       void operator()(const tx_extra_oxen_name_system& x) {
-        auto& lns = entry.lns.emplace();
-        lns.blocks = lns::expiry_blocks(nettype, x.type);
+        auto& ons = entry.ons.emplace();
+        ons.blocks = ons::expiry_blocks(nettype, x.type);
         switch (x.type)
         {
-          case lns::mapping_type::lokinet: [[fallthrough]];
-          case lns::mapping_type::lokinet_2years: [[fallthrough]];
-          case lns::mapping_type::lokinet_5years: [[fallthrough]];
-          case lns::mapping_type::lokinet_10years: lns.type = "lokinet"; break;
+          case ons::mapping_type::lokinet: [[fallthrough]];
+          case ons::mapping_type::lokinet_2years: [[fallthrough]];
+          case ons::mapping_type::lokinet_5years: [[fallthrough]];
+          case ons::mapping_type::lokinet_10years: ons.type = "lokinet"; break;
 
-          case lns::mapping_type::session: lns.type = "session"; break;
-          case lns::mapping_type::wallet:  lns.type = "wallet"; break;
+          case ons::mapping_type::session: ons.type = "session"; break;
+          case ons::mapping_type::wallet:  ons.type = "wallet"; break;
 
-          case lns::mapping_type::update_record_internal: [[fallthrough]];
-          case lns::mapping_type::_count:
+          case ons::mapping_type::update_record_internal: [[fallthrough]];
+          case ons::mapping_type::_count:
                                            break;
         }
         if (x.is_buying())
-          lns.buy = true;
+          ons.buy = true;
         else if (x.is_updating())
-          lns.update = true;
+          ons.update = true;
         else if (x.is_renewing())
-          lns.renew = true;
-        lns.name_hash = tools::type_to_hex(x.name_hash);
+          ons.renew = true;
+        ons.name_hash = tools::type_to_hex(x.name_hash);
         if (!x.encrypted_value.empty())
-          lns.value = oxenmq::to_hex(x.encrypted_value);
-        _load_owner(lns.owner, x.owner);
-        _load_owner(lns.backup_owner, x.backup_owner);
+          ons.value = oxenmq::to_hex(x.encrypted_value);
+        _load_owner(ons.owner, x.owner);
+        _load_owner(ons.backup_owner, x.backup_owner);
       }
 
       // Ignore these fields:
@@ -1120,6 +1120,7 @@ namespace cryptonote { namespace rpc {
   SEND_RAW_TX::response core_rpc_server::invoke(SEND_RAW_TX::request&& req, rpc_context context)
   {
     SEND_RAW_TX::response res{};
+
 
     PERF_TIMER(on_send_raw_tx);
     if (use_bootstrap_daemon_if_necessary<SEND_RAW_TX>(req, res))
@@ -1988,7 +1989,7 @@ namespace cryptonote { namespace rpc {
       block blk;
       bool have_block = m_core.get_block_by_height(h, blk);
       if (!have_block)
-        throw rpc_error{ERROR_INTERNAL, 
+        throw rpc_error{ERROR_INTERNAL,
           "Internal error: can't get block by height. Height = " + std::to_string(h) + "."};
       if (blk.miner_tx.vin.size() != 1 || !std::holds_alternative<txin_gen>(blk.miner_tx.vin.front()))
         throw rpc_error{ERROR_INTERNAL, "Internal error: coinbase transaction in the block has the wrong type"};
@@ -3530,43 +3531,43 @@ namespace cryptonote { namespace rpc {
     return res;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  LNS_NAMES_TO_OWNERS::response core_rpc_server::invoke(LNS_NAMES_TO_OWNERS::request&& req, rpc_context context)
+  ONS_NAMES_TO_OWNERS::response core_rpc_server::invoke(ONS_NAMES_TO_OWNERS::request&& req, rpc_context context)
   {
-    LNS_NAMES_TO_OWNERS::response res{};
+    ONS_NAMES_TO_OWNERS::response res{};
 
     if (!context.admin)
-      check_quantity_limit(req.entries.size(), LNS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES);
+      check_quantity_limit(req.entries.size(), ONS_NAMES_TO_OWNERS::MAX_REQUEST_ENTRIES);
 
     std::optional<uint64_t> height = m_core.get_current_blockchain_height();
     uint8_t hf_version = m_core.get_hard_fork_version(*height);
     if (req.include_expired) height = std::nullopt;
 
-    std::vector<lns::mapping_type> types;
+    std::vector<ons::mapping_type> types;
 
-    lns::name_system_db &db = m_core.get_blockchain_storage().name_system_db();
+    ons::name_system_db &db = m_core.get_blockchain_storage().name_system_db();
     for (size_t request_index = 0; request_index < req.entries.size(); request_index++)
     {
-      LNS_NAMES_TO_OWNERS::request_entry const &request = req.entries[request_index];
+      ONS_NAMES_TO_OWNERS::request_entry const &request = req.entries[request_index];
       if (!context.admin)
-        check_quantity_limit(request.types.size(), LNS_NAMES_TO_OWNERS::MAX_TYPE_REQUEST_ENTRIES, "types");
+        check_quantity_limit(request.types.size(), ONS_NAMES_TO_OWNERS::MAX_TYPE_REQUEST_ENTRIES, "types");
 
       types.clear();
       if (types.capacity() < request.types.size())
         types.reserve(request.types.size());
       for (auto type : request.types)
       {
-        types.push_back(static_cast<lns::mapping_type>(type));
-        if (!lns::mapping_type_allowed(hf_version, types.back()))
+        types.push_back(static_cast<ons::mapping_type>(type));
+        if (!ons::mapping_type_allowed(hf_version, types.back()))
           throw rpc_error{ERROR_WRONG_PARAM, "Invalid lokinet type '" + std::to_string(type) + "'"};
       }
 
       // This also takes 32 raw bytes, but that is undocumented (because it is painful to pass
       // through json).
-      auto name_hash = lns::name_hash_input_to_base64(request.name_hash);
+      auto name_hash = ons::name_hash_input_to_base64(request.name_hash);
       if (!name_hash)
         throw rpc_error{ERROR_WRONG_PARAM, "Invalid name_hash: expected hash as 64 hex digits or 43/44 base64 characters"};
 
-      std::vector<lns::mapping_record> records = db.get_mappings(types, *name_hash, height);
+      std::vector<ons::mapping_record> records = db.get_mappings(types, *name_hash, height);
       for (auto const &record : records)
       {
         auto& entry = res.entries.emplace_back();
@@ -3586,38 +3587,38 @@ namespace cryptonote { namespace rpc {
     return res;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  LNS_OWNERS_TO_NAMES::response core_rpc_server::invoke(LNS_OWNERS_TO_NAMES::request&& req, rpc_context context)
+  ONS_OWNERS_TO_NAMES::response core_rpc_server::invoke(ONS_OWNERS_TO_NAMES::request&& req, rpc_context context)
   {
-    LNS_OWNERS_TO_NAMES::response res{};
+    ONS_OWNERS_TO_NAMES::response res{};
 
     if (!context.admin)
-      check_quantity_limit(req.entries.size(), LNS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES);
+      check_quantity_limit(req.entries.size(), ONS_OWNERS_TO_NAMES::MAX_REQUEST_ENTRIES);
 
-    std::unordered_map<lns::generic_owner, size_t> owner_to_request_index;
-    std::vector<lns::generic_owner> owners;
+    std::unordered_map<ons::generic_owner, size_t> owner_to_request_index;
+    std::vector<ons::generic_owner> owners;
 
     owners.reserve(req.entries.size());
     for (size_t request_index = 0; request_index < req.entries.size(); request_index++)
     {
       std::string const &owner     = req.entries[request_index];
-      lns::generic_owner lns_owner = {};
+      ons::generic_owner ons_owner = {};
       std::string errmsg;
-      if (!lns::parse_owner_to_generic_owner(m_core.get_nettype(), owner, lns_owner, &errmsg))
+      if (!ons::parse_owner_to_generic_owner(m_core.get_nettype(), owner, ons_owner, &errmsg))
         throw rpc_error{ERROR_WRONG_PARAM, std::move(errmsg)};
 
       // TODO(oxen): We now serialize both owner and backup_owner, since if
       // we specify an owner that is backup owner, we don't show the (other)
       // owner. For RPC compatibility we keep the request_index around until the
       // next hard fork (16)
-      owners.push_back(lns_owner);
-      owner_to_request_index[lns_owner] = request_index;
+      owners.push_back(ons_owner);
+      owner_to_request_index[ons_owner] = request_index;
     }
 
-    lns::name_system_db &db = m_core.get_blockchain_storage().name_system_db();
+    ons::name_system_db &db = m_core.get_blockchain_storage().name_system_db();
     std::optional<uint64_t> height;
     if (!req.include_expired) height = m_core.get_current_blockchain_height();
 
-    std::vector<lns::mapping_record> records = db.get_mappings_by_owners(owners, height);
+    std::vector<ons::mapping_record> records = db.get_mappings_by_owners(owners, height);
     for (auto &record : records)
     {
       auto& entry = res.entries.emplace_back();
@@ -3643,20 +3644,20 @@ namespace cryptonote { namespace rpc {
   }
 
   //------------------------------------------------------------------------------------------------------------------------------
-  LNS_RESOLVE::response core_rpc_server::invoke(LNS_RESOLVE::request&& req, rpc_context context)
+  ONS_RESOLVE::response core_rpc_server::invoke(ONS_RESOLVE::request&& req, rpc_context context)
   {
-    LNS_RESOLVE::response res{};
+    ONS_RESOLVE::response res{};
 
-    if (req.type >= tools::enum_count<lns::mapping_type>)
-      throw rpc_error{ERROR_WRONG_PARAM, "Unable to resolve LNS address: 'type' parameter not specified"};
+    if (req.type >= tools::enum_count<ons::mapping_type>)
+      throw rpc_error{ERROR_WRONG_PARAM, "Unable to resolve ONS address: 'type' parameter not specified"};
 
-    auto name_hash = lns::name_hash_input_to_base64(req.name_hash);
+    auto name_hash = ons::name_hash_input_to_base64(req.name_hash);
     if (!name_hash)
-      throw rpc_error{ERROR_WRONG_PARAM, "Unable to resolve LNS address: invalid 'name_hash' value '" + req.name_hash + "'"};
+      throw rpc_error{ERROR_WRONG_PARAM, "Unable to resolve ONS address: invalid 'name_hash' value '" + req.name_hash + "'"};
 
     uint8_t hf_version = m_core.get_hard_fork_version(m_core.get_current_blockchain_height());
-    auto type = static_cast<lns::mapping_type>(req.type);
-    if (!lns::mapping_type_allowed(hf_version, type))
+    auto type = static_cast<ons::mapping_type>(req.type);
+    if (!ons::mapping_type_allowed(hf_version, type))
       throw rpc_error{ERROR_WRONG_PARAM, "Invalid lokinet type '" + std::to_string(req.type) + "'"};
 
     if (auto mapping = m_core.get_blockchain_storage().name_system_db().resolve(
@@ -3666,6 +3667,27 @@ namespace cryptonote { namespace rpc {
       res.encrypted_value = oxenmq::to_hex(val);
       if (val.size() < mapping->to_view().size())
         res.nonce = oxenmq::to_hex(nonce);
+    }
+    return res;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  ONS_RESOLVE_ADDRESS::response core_rpc_server::invoke(ONS_RESOLVE_ADDRESS::request&& req, rpc_context context)
+  {
+    ONS_RESOLVE_ADDRESS::response res{};
+
+    uint64_t height;
+    height = (req.height) ? req.height : m_core.get_current_blockchain_height();
+
+    cryptonote::address_parse_info info;
+    cryptonote::network_type nettype = m_core.get_nettype();
+    bool success = m_core.get_account_address_from_str_or_ons(info, nettype, req.address, height);
+
+    if (success)
+    {
+      res.status = STATUS_OK;
+      res.address = get_account_address_as_str(nettype, 0, info.address);
+    } else {
+      res.status = "Failed";
     }
     return res;
   }

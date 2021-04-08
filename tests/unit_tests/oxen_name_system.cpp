@@ -68,31 +68,31 @@ TEST(oxen_name_system, name_tests)
       {"\"hello", false},
   };
 
-  for (uint16_t type16 = 0; type16 < static_cast<uint16_t>(lns::mapping_type::_count); type16++)
+  for (uint16_t type16 = 0; type16 < static_cast<uint16_t>(ons::mapping_type::_count); type16++)
   {
-    auto type = static_cast<lns::mapping_type>(type16);
-    if (type == lns::mapping_type::wallet) continue; // Not yet supported
-    name_test const *names = lns::is_lokinet_type(type) ? lokinet_names : session_wallet_names;
-    size_t names_count     = lns::is_lokinet_type(type) ? oxen::char_count(lokinet_names) : oxen::char_count(session_wallet_names);
+    auto type = static_cast<ons::mapping_type>(type16);
+    if (type == ons::mapping_type::wallet) continue; // Not yet supported
+    name_test const *names = ons::is_lokinet_type(type) ? lokinet_names : session_wallet_names;
+    size_t names_count     = ons::is_lokinet_type(type) ? oxen::char_count(lokinet_names) : oxen::char_count(session_wallet_names);
 
     for (size_t i = 0; i < names_count; i++)
     {
       name_test const &entry = names[i];
-      ASSERT_EQ(lns::validate_lns_name(type, entry.name), entry.allowed) << "Values were {type=" << type << ", name=\"" << entry.name << "\"}";
+      ASSERT_EQ(ons::validate_ons_name(type, entry.name), entry.allowed) << "Values were {type=" << type << ", name=\"" << entry.name << "\"}";
     }
   }
 }
 
 TEST(oxen_name_system, value_encrypt_and_decrypt)
 {
-  std::string name         = "my lns name";
-  lns::mapping_value value = {};
+  std::string name         = "my ons name";
+  ons::mapping_value value = {};
   value.len                = 32;
   memset(&value.buffer[0], 'a', value.len);
 
   // The type here is not hugely important for decryption except that lokinet (as opposed to
   // session) doesn't fall back to argon2 decryption if decryption fails.
-  constexpr auto type = lns::mapping_type::lokinet;
+  constexpr auto type = ons::mapping_type::lokinet;
 
   // Encryption and Decryption success
   {
@@ -129,7 +129,7 @@ TEST(oxen_name_system, value_encrypt_and_decrypt)
 TEST(oxen_name_system, value_encrypt_and_decrypt_heavy)
 {
   std::string name         = "abcdefg";
-  lns::mapping_value value = {};
+  ons::mapping_value value = {};
   value.len                = 33;
   memset(&value.buffer[0], 'a', value.len);
 
@@ -140,8 +140,8 @@ TEST(oxen_name_system, value_encrypt_and_decrypt_heavy)
     ASSERT_TRUE(mval.encrypt(name, nullptr, true));
     ASSERT_TRUE(mval_new.encrypt(name, nullptr, false));
     ASSERT_EQ(mval.len + 24, mval_new.len); // New value appends a 24-byte nonce
-    ASSERT_TRUE(mval.decrypt(name, lns::mapping_type::session));
-    ASSERT_TRUE(mval_new.decrypt(name, lns::mapping_type::session));
+    ASSERT_TRUE(mval.decrypt(name, ons::mapping_type::session));
+    ASSERT_TRUE(mval_new.decrypt(name, ons::mapping_type::session));
     ASSERT_TRUE(mval == value);
     ASSERT_TRUE(mval_new == value);
   }

@@ -181,13 +181,13 @@ namespace cryptonote
     bool request_stake_unlock(const std::vector<std::string> &args_);
     bool print_locked_stakes(const std::vector<std::string>& /*args*/);
     bool query_locked_stakes(bool print_result);
-    bool lns_buy_mapping(std::vector<std::string> args);
-    bool lns_renew_mapping(std::vector<std::string> args);
-    bool lns_update_mapping(std::vector<std::string> args);
-    bool lns_encrypt(std::vector<std::string> args);
-    bool lns_make_update_mapping_signature(std::vector<std::string> args);
-    bool lns_print_owners_to_names(const std::vector<std::string> &args);
-    bool lns_print_name_to_owners(std::vector<std::string> args);
+    bool ons_buy_mapping(std::vector<std::string> args);
+    bool ons_renew_mapping(std::vector<std::string> args);
+    bool ons_update_mapping(std::vector<std::string> args);
+    bool ons_encrypt(std::vector<std::string> args);
+    bool ons_make_update_mapping_signature(std::vector<std::string> args);
+    bool ons_print_owners_to_names(const std::vector<std::string> &args);
+    bool ons_print_name_to_owners(std::vector<std::string> args);
 
     enum class sweep_type_t { stake, register_stake, all_or_below, single };
     bool sweep_main_internal(sweep_type_t sweep_type, std::vector<tools::wallet2::pending_tx> &ptx_vector, cryptonote::address_parse_info const &dest, bool blink);

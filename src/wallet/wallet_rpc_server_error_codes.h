@@ -82,13 +82,13 @@ constexpr int16_t ATTRIBUTE_NOT_FOUND    = -45;
 // Loki:
 constexpr int16_t BLINK_FAILED           = -1000;
 constexpr int16_t HF_QUERY_FAILED        = -1001;
-constexpr int16_t WRONG_LNS_TYPE         = -1002;
-constexpr int16_t LNS_BAD_NAME           = -1003;
-constexpr int16_t LNS_VALUE_TOO_LONG     = -1004;
-constexpr int16_t LNS_VALUE_NOT_HEX      = -1005;
-constexpr int16_t LNS_VALUE_LENGTH_NOT_EVEN = -1006;
-constexpr int16_t LNS_VALUE_DECRYPT_FAILED = -1007;
-constexpr int16_t LNS_VALUE_ENCRYPT_FAILED = -1008;
-constexpr int16_t LNS_BAD_VALUE          = -1009;
+constexpr int16_t WRONG_ONS_TYPE         = -1002;
+constexpr int16_t ONS_BAD_NAME           = -1003;
+constexpr int16_t ONS_VALUE_TOO_LONG     = -1004;
+constexpr int16_t ONS_VALUE_NOT_HEX      = -1005;
+constexpr int16_t ONS_VALUE_LENGTH_NOT_EVEN = -1006;
+constexpr int16_t ONS_VALUE_DECRYPT_FAILED = -1007;
+constexpr int16_t ONS_VALUE_ENCRYPT_FAILED = -1008;
+constexpr int16_t ONS_BAD_VALUE          = -1009;
 
 }

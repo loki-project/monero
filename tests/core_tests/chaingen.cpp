@@ -167,7 +167,7 @@ oxen_chain_generator::oxen_chain_generator(std::vector<test_event_entry> &events
 : events_(events)
 , hard_forks_(hard_forks)
 {
-  bool init = lns_db_->init(nullptr, cryptonote::FAKECHAIN, lns::init_oxen_name_system("", false /*read_only*/));
+  bool init = ons_db_->init(nullptr, cryptonote::FAKECHAIN, ons::init_oxen_name_system("", false /*read_only*/));
   assert(init);
 
   first_miner_.generate();
@@ -235,9 +235,9 @@ oxen_blockchain_entry &oxen_chain_generator::add_block(oxen_blockchain_entry con
     db_.tx_table[tx_hash] = tx;
   }
 
-  if (can_be_added_to_blockchain && entry.block.major_version >= cryptonote::network_version_15_lns)
+  if (can_be_added_to_blockchain && entry.block.major_version >= cryptonote::network_version_15_ons)
   {
-    lns_db_->add_block(entry.block, entry.txs);
+    ons_db_->add_block(entry.block, entry.txs);
   }
 
   // TODO(oxen): State history culling and alt states
@@ -330,11 +330,11 @@ void oxen_chain_generator::add_tx(cryptonote::transaction const &tx, bool can_be
 cryptonote::transaction
 oxen_chain_generator::create_and_add_oxen_name_system_tx(cryptonote::account_base const &src,
                                                          uint8_t hf_version,
-                                                         lns::mapping_type type,
+                                                         ons::mapping_type type,
                                                          std::string const &name,
-                                                         lns::mapping_value const &value,
-                                                         lns::generic_owner const *owner,
-                                                         lns::generic_owner const *backup_owner,
+                                                         ons::mapping_value const &value,
+                                                         ons::generic_owner const *owner,
+                                                         ons::generic_owner const *backup_owner,
                                                          bool kept_by_block)
 {
   cryptonote::transaction t = create_oxen_name_system_tx(src, hf_version, type, name, value, owner, backup_owner);
@@ -345,12 +345,12 @@ oxen_chain_generator::create_and_add_oxen_name_system_tx(cryptonote::account_bas
 cryptonote::transaction
 oxen_chain_generator::create_and_add_oxen_name_system_tx_update(cryptonote::account_base const &src,
                                                                 uint8_t hf_version,
-                                                                lns::mapping_type type,
+                                                                ons::mapping_type type,
                                                                 std::string const &name,
-                                                                lns::mapping_value const *value,
-                                                                lns::generic_owner const *owner,
-                                                                lns::generic_owner const *backup_owner,
-                                                                lns::generic_signature *signature,
+                                                                ons::mapping_value const *value,
+                                                                ons::generic_owner const *owner,
+                                                                ons::generic_owner const *backup_owner,
+                                                                ons::generic_signature *signature,
                                                                 bool kept_by_block)
 {
   cryptonote::transaction t = create_oxen_name_system_tx_update(src, hf_version, type, name, value, owner, backup_owner, signature);
@@ -361,7 +361,7 @@ oxen_chain_generator::create_and_add_oxen_name_system_tx_update(cryptonote::acco
 cryptonote::transaction
 oxen_chain_generator::create_and_add_oxen_name_system_tx_renew(cryptonote::account_base const &src,
                                                                uint8_t hf_version,
-                                                               lns::mapping_type type,
+                                                               ons::mapping_type type,
                                                                std::string const &name,
                                                                bool kept_by_block)
 {
@@ -602,37 +602,37 @@ cryptonote::checkpoint_t oxen_chain_generator::create_service_node_checkpoint(ui
 
 cryptonote::transaction oxen_chain_generator::create_oxen_name_system_tx(cryptonote::account_base const &src,
                                                                          uint8_t hf_version,
-                                                                         lns::mapping_type type,
+                                                                         ons::mapping_type type,
                                                                          std::string const &name,
-                                                                         lns::mapping_value const &value,
-                                                                         lns::generic_owner const *owner,
-                                                                         lns::generic_owner const *backup_owner,
+                                                                         ons::mapping_value const &value,
+                                                                         ons::generic_owner const *owner,
+                                                                         ons::generic_owner const *backup_owner,
                                                                          std::optional<uint64_t> burn_override) const
 {
-  lns::generic_owner generic_owner = {};
+  ons::generic_owner generic_owner = {};
   if (owner)
   {
     generic_owner = *owner;
   }
   else
   {
-    generic_owner = lns::make_monero_owner(src.get_keys().m_account_address, false /*subaddress*/);
+    generic_owner = ons::make_monero_owner(src.get_keys().m_account_address, false /*subaddress*/);
   }
 
   cryptonote::block const &head = top().block;
   uint64_t new_height           = get_block_height(top().block) + 1;
   uint8_t new_hf_version        = get_hf_version_at(new_height);
-  uint64_t burn = burn_override.value_or(lns::burn_needed(new_hf_version, type));
+  uint64_t burn = burn_override.value_or(ons::burn_needed(new_hf_version, type));
 
   auto lcname = tools::lowercase_ascii_string(name);
-  crypto::hash name_hash       = lns::name_to_hash(lcname);
-  std::string name_base64_hash = lns::name_to_base64_hash(lcname);
+  crypto::hash name_hash       = ons::name_to_hash(lcname);
+  std::string name_base64_hash = ons::name_to_base64_hash(lcname);
   crypto::hash prev_txid = crypto::null_hash;
-  if (lns::mapping_record mapping = lns_db_->get_mapping(type, name_base64_hash, new_height))
+  if (ons::mapping_record mapping = ons_db_->get_mapping(type, name_base64_hash, new_height))
     prev_txid = mapping.txid;
 
-  lns::mapping_value encrypted_value = value;
-  bool encrypted = encrypted_value.encrypt(lcname, &name_hash, hf_version <= cryptonote::network_version_15_lns);
+  ons::mapping_value encrypted_value = value;
+  bool encrypted = encrypted_value.encrypt(lcname, &name_hash, hf_version <= cryptonote::network_version_15_ons);
   assert(encrypted);
 
   std::vector<uint8_t> extra;
@@ -651,46 +651,46 @@ cryptonote::transaction oxen_chain_generator::create_oxen_name_system_tx(crypton
 
 cryptonote::transaction oxen_chain_generator::create_oxen_name_system_tx_update(cryptonote::account_base const &src,
                                                                                 uint8_t hf_version,
-                                                                                lns::mapping_type type,
+                                                                                ons::mapping_type type,
                                                                                 std::string const &name,
-                                                                                lns::mapping_value const *value,
-                                                                                lns::generic_owner const *owner,
-                                                                                lns::generic_owner const *backup_owner,
-                                                                                lns::generic_signature *signature,
+                                                                                ons::mapping_value const *value,
+                                                                                ons::generic_owner const *owner,
+                                                                                ons::generic_owner const *backup_owner,
+                                                                                ons::generic_signature *signature,
                                                                                 bool use_asserts) const
 {
   auto lcname = tools::lowercase_ascii_string(name);
-  crypto::hash name_hash = lns::name_to_hash(lcname);
+  crypto::hash name_hash = ons::name_to_hash(lcname);
   crypto::hash prev_txid = {};
   {
-    std::string name_base64_hash = lns::name_to_base64_hash(lcname);
-    lns::mapping_record mapping  = lns_db_->get_mapping(type, name_base64_hash);
+    std::string name_base64_hash = ons::name_to_base64_hash(lcname);
+    ons::mapping_record mapping  = ons_db_->get_mapping(type, name_base64_hash);
     if (use_asserts) assert(mapping);
     prev_txid = mapping.txid;
   }
 
-  lns::mapping_value encrypted_value = {};
+  ons::mapping_value encrypted_value = {};
   if (value)
   {
     encrypted_value = *value;
     if (!encrypted_value.encrypted)
     {
       assert(!signature); // Can't specify a signature with an unencrypted value because encrypting generates a new nonce and would invalidate it
-      bool encrypted = encrypted_value.encrypt(lcname, &name_hash, hf_version <= cryptonote::network_version_15_lns);
+      bool encrypted = encrypted_value.encrypt(lcname, &name_hash, hf_version <= cryptonote::network_version_15_ons);
       if (use_asserts) assert(encrypted);
     }
   }
 
-  lns::generic_signature signature_ = {};
+  ons::generic_signature signature_ = {};
   if (!signature)
   {
     signature = &signature_;
-    auto data = lns::tx_extra_signature(encrypted_value.to_view(), owner, backup_owner, prev_txid);
+    auto data = ons::tx_extra_signature(encrypted_value.to_view(), owner, backup_owner, prev_txid);
     crypto::hash hash{};
     if (!data.empty())
         crypto_generichash(reinterpret_cast<unsigned char*>(hash.data), sizeof(hash), reinterpret_cast<const unsigned char*>(data.data()), data.size(), nullptr, 0);
     generate_signature(hash, src.get_keys().m_account_address.m_spend_public_key, src.get_keys().m_spend_secret_key, signature->monero);
-    signature->type = lns::generic_owner_sig_type::monero;
+    signature->type = ons::generic_owner_sig_type::monero;
   }
 
   std::vector<uint8_t> extra;
@@ -712,10 +712,10 @@ cryptonote::transaction oxen_chain_generator::create_oxen_name_system_tx_update(
 }
 
 cryptonote::transaction
-oxen_chain_generator::create_oxen_name_system_tx_update_w_extra(cryptonote::account_base const &src, uint8_t hf_version, cryptonote::tx_extra_oxen_name_system const &lns_extra) const
+oxen_chain_generator::create_oxen_name_system_tx_update_w_extra(cryptonote::account_base const &src, uint8_t hf_version, cryptonote::tx_extra_oxen_name_system const &ons_extra) const
 {
   std::vector<uint8_t> extra;
-  cryptonote::add_oxen_name_system_to_tx_extra(extra, lns_extra);
+  cryptonote::add_oxen_name_system_to_tx_extra(extra, ons_extra);
 
   cryptonote::block const &head = top().block;
   uint64_t new_height           = get_block_height(top().block) + 1;
@@ -732,21 +732,21 @@ oxen_chain_generator::create_oxen_name_system_tx_update_w_extra(cryptonote::acco
 
 cryptonote::transaction oxen_chain_generator::create_oxen_name_system_tx_renew(cryptonote::account_base const &src,
                                                                                uint8_t hf_version,
-                                                                               lns::mapping_type type,
+                                                                               ons::mapping_type type,
                                                                                std::string const &name,
                                                                                std::optional<uint64_t> burn_override) const
 {
   auto lcname = tools::lowercase_ascii_string(name);
-  crypto::hash name_hash = lns::name_to_hash(lcname);
+  crypto::hash name_hash = ons::name_to_hash(lcname);
   crypto::hash prev_txid = {};
   {
-    std::string name_base64_hash = lns::name_to_base64_hash(lcname);
-    lns::mapping_record mapping  = lns_db_->get_mapping(type, name_base64_hash);
+    std::string name_base64_hash = ons::name_to_base64_hash(lcname);
+    ons::mapping_record mapping  = ons_db_->get_mapping(type, name_base64_hash);
     prev_txid = mapping.txid;
   }
 
   uint8_t new_hf_version = get_hf_version_at(get_block_height(top().block) + 1);
-  uint64_t burn = burn_override.value_or(lns::burn_needed(new_hf_version, type));
+  uint64_t burn = burn_override.value_or(ons::burn_needed(new_hf_version, type));
 
   std::vector<uint8_t> extra;
   cryptonote::tx_extra_oxen_name_system data = cryptonote::tx_extra_oxen_name_system::make_renew(type, name_hash, prev_txid);
@@ -960,7 +960,7 @@ bool oxen_chain_generator::block_begin(oxen_blockchain_entry &entry, oxen_create
 
     static_assert(cryptonote::network_version_count == cryptonote::network_version_18 + 1,
             "The code below needs to be updated to support higher hard fork versions");
-    if (blk.major_version == cryptonote::network_version_15_lns)
+    if (blk.major_version == cryptonote::network_version_15_ons)
       miner_tx_context.batched_governance = FOUNDATION_REWARD_HF15 * num_blocks;
     else if (blk.major_version == cryptonote::network_version_16_pulse)
       miner_tx_context.batched_governance = (FOUNDATION_REWARD_HF15 + CHAINFLIP_LIQUIDITY_HF16) * num_blocks;
@@ -1226,7 +1226,7 @@ static void manual_calc_batched_governance(const test_generator &generator,
     uint64_t num_blocks                 = cryptonote::get_config(cryptonote::FAKECHAIN).GOVERNANCE_REWARD_INTERVAL_IN_BLOCKS;
     uint64_t start_height               = height - num_blocks;
 
-    if (hard_fork_version >= cryptonote::network_version_15_lns)
+    if (hard_fork_version >= cryptonote::network_version_15_ons)
     {
       miner_tx_context.batched_governance = num_blocks * cryptonote::governance_reward_formula(0, hard_fork_version);
       return;
@@ -1472,7 +1472,7 @@ cryptonote::transaction make_registration_tx(std::vector<test_event_entry>& even
   add_service_node_contributor_to_tx_extra(extra, contributors.at(0));
 
   cryptonote::txtype tx_type = cryptonote::txtype::standard;
-  if (hf_version >= cryptonote::network_version_15_lns) tx_type = cryptonote::txtype::stake; // NOTE: txtype stake was not introduced until HF14
+  if (hf_version >= cryptonote::network_version_15_ons) tx_type = cryptonote::txtype::stake; // NOTE: txtype stake was not introduced until HF14
   oxen_tx_builder(events, tx, head, account, account.get_keys().m_account_address, amount, hf_version).with_tx_type(tx_type).with_extra(extra).with_unlock_time(unlock_time).build();
   events.push_back(tx);
   return tx;

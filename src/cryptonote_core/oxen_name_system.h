@@ -17,17 +17,19 @@ namespace cryptonote
 {
 struct checkpoint_t;
 struct block;
+struct address_parse_info;
 class transaction;
 struct account_address;
 struct tx_extra_oxen_name_system;
 class Blockchain;
 }; // namespace cryptonote
 
-namespace lns
+namespace ons
 {
 
-constexpr size_t WALLET_NAME_MAX                  = 97; // mainnet addresses are 95 but testnet/devnet are 97
-constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH     = 2 * sizeof(crypto::public_key);
+constexpr size_t WALLET_NAME_MAX                  = 64;
+constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID     = 73;  // Wallet will encrypt an identifier (1 byte) a public spend and view key (2x 32 bytes) = 65 bytes plus an additional item for payment id (8 bytes) if necessary. The identifier 0 -> No Subaddress or Payment ID, 1 -> Has Subaddress, 2-> Has Payment ID
+constexpr size_t WALLET_ACCOUNT_BINARY_LENGTH_NO_PAYMENT_ID     = 65;
 constexpr size_t LOKINET_DOMAIN_NAME_MAX          = 63 + 5; // DNS components name must be at most 63 (+ 5 for .loki); this limit applies if there is at least one hyphen (and thus includes punycode)
 constexpr size_t LOKINET_DOMAIN_NAME_MAX_NOHYPHEN = 32 + 5; // If the name does not contain a - then we restrict it to 32 characters so that it cannot be (and is obviously not) an encoded .loki address (52 characters)
 constexpr size_t LOKINET_ADDRESS_BINARY_LENGTH    = sizeof(crypto::ed25519_public_key);
@@ -42,7 +44,7 @@ constexpr size_t SODIUM_ENCRYPTION_EXTRA_BYTES = 40; // crypto_aead_xchacha20pol
 
 struct mapping_value
 {
-  static size_t constexpr BUFFER_SIZE = std::max({WALLET_ACCOUNT_BINARY_LENGTH, LOKINET_ADDRESS_BINARY_LENGTH, SESSION_PUBLIC_KEY_BINARY_LENGTH}) + SODIUM_ENCRYPTION_EXTRA_BYTES;
+  static size_t constexpr BUFFER_SIZE = std::max({WALLET_ACCOUNT_BINARY_LENGTH_INC_PAYMENT_ID, LOKINET_ADDRESS_BINARY_LENGTH, SESSION_PUBLIC_KEY_BINARY_LENGTH}) + SODIUM_ENCRYPTION_EXTRA_BYTES;
   std::array<uint8_t, BUFFER_SIZE> buffer;
   bool encrypted;
   size_t len;
@@ -58,7 +60,7 @@ struct mapping_value
   bool operator==(mapping_value const &other) const { return encrypted == other.encrypted && other.to_view() == to_view(); }
   bool operator==(std::string_view other)     const { return other == to_view(); }
 
-  // Encrypts the mapping value in-place given the name, suitable for storing into the LNS DB.  Only
+  // Encrypts the mapping value in-place given the name, suitable for storing into the ONS DB.  Only
   // basic overflow validation is attempted, values should be pre-validated in the validate*
   // functions.
   //
@@ -122,13 +124,14 @@ inline std::string_view mapping_type_str(mapping_type type)
 inline std::ostream &operator<<(std::ostream &os, mapping_type type) { return os << mapping_type_str(type); }
 
 constexpr bool mapping_type_allowed(uint8_t hf_version, mapping_type type) {
-  return (type == mapping_type::session && hf_version >= cryptonote::network_version_15_lns)
-      || (is_lokinet_type(type) && hf_version >= cryptonote::network_version_16_pulse);
+  return (type == mapping_type::session && hf_version >= cryptonote::network_version_15_ons)
+      || (is_lokinet_type(type) && hf_version >= cryptonote::network_version_16_pulse)
+      || (type == mapping_type::wallet && hf_version >= cryptonote::network_version_18);
 }
 
 // Returns all mapping types supported for lookup as of the given hardfork.  (Note that this does
 // not return the dedicated length types such as mapping_type::lokinet_5years as those are only
-// relevant within a LNS buy tx).
+// relevant within a ONS buy tx).
 std::vector<mapping_type> all_mapping_types(uint8_t hf_version);
 
 sqlite3 *init_oxen_name_system(const fs::path& file_path, bool read_only);
@@ -136,7 +139,7 @@ sqlite3 *init_oxen_name_system(const fs::path& file_path, bool read_only);
 /// Returns the integer value used in the database and in RPC lookup calls for the given mapping
 /// type.  In particularly this maps all mapping_type::lokinet_Xyears values to the underlying value
 /// of mapping_type::lokinet.
-constexpr uint16_t db_mapping_type(lns::mapping_type type) {
+constexpr uint16_t db_mapping_type(ons::mapping_type type) {
   if (is_lokinet_type(type))
     return static_cast<uint16_t>(mapping_type::lokinet);
   return static_cast<uint16_t>(type);
@@ -160,7 +163,7 @@ std::string name_hash_bytes_to_base64(std::string_view bytes);
 // otherwise.
 std::optional<std::string> name_hash_input_to_base64(std::string_view input);
 
-bool validate_lns_name(mapping_type type, std::string name, std::string *reason = nullptr);
+bool validate_ons_name(mapping_type type, std::string name, std::string *reason = nullptr);
 
 generic_signature  make_ed25519_signature(crypto::hash const &hash, crypto::ed25519_secret_key const &skey);
 generic_owner      make_monero_owner(cryptonote::account_public_address const &owner, bool is_subaddress);
@@ -168,16 +171,16 @@ generic_owner      make_ed25519_owner(crypto::ed25519_public_key const &pkey);
 bool               parse_owner_to_generic_owner(cryptonote::network_type nettype, std::string_view owner, generic_owner &key, std::string *reason);
 std::string        tx_extra_signature(std::string_view value, generic_owner const *owner, generic_owner const *backup_owner, crypto::hash const &prev_txid);
 
-enum struct lns_tx_type { lookup, buy, update, renew };
-// Converts a human readable case-insensitive string denoting the mapping type into a value suitable for storing into the LNS DB.
+enum struct ons_tx_type { lookup, buy, update, renew };
+// Converts a human readable case-insensitive string denoting the mapping type into a value suitable for storing into the ONS DB.
 // Currently accepts "session" or "lokinet" for lookups, buys, updates, and renewals; for buys and renewals also accepts "lokinet_Ny[ear]" for N=2,5,10
 // Lookups are implied by none of buy/update/renew.
 // mapping_type: (optional) if function returns true, the uint16_t value of the 'type' will be set
-bool         validate_mapping_type(std::string_view type, uint8_t hf_version, lns_tx_type txtype, mapping_type *mapping_type, std::string *reason);
+bool         validate_mapping_type(std::string_view type, uint8_t hf_version, ons_tx_type txtype, mapping_type *mapping_type, std::string *reason);
 
-// Hashes an LNS name.  The name must already be lower-case (but this is only checked in debug builds).
+// Hashes an ONS name.  The name must already be lower-case (but this is only checked in debug builds).
 crypto::hash name_to_hash(std::string_view name, const std::optional<crypto::hash>& key = std::nullopt); // Takes a human readable name and hashes it.  Takes an optional value to use as a key to produce a keyed hash.
-std::string  name_to_base64_hash(std::string_view name); // Takes a human readable name, hashes it and returns a base64 representation of the hash, suitable for storage into the LNS DB.
+std::string  name_to_base64_hash(std::string_view name); // Takes a human readable name, hashes it and returns a base64 representation of the hash, suitable for storage into the ONS DB.
 
 struct owner_record
 {
@@ -201,9 +204,9 @@ struct settings_record
 struct mapping_record
 {
   // NOTE: We keep expired entries in the DB indefinitely because we need to
-  // keep all LNS entries indefinitely to support large blockchain detachments.
+  // keep all ONS entries indefinitely to support large blockchain detachments.
   // A mapping_record forms a linked list of TXID's which allows us to revert
-  // the LNS DB to any arbitrary height at a small additional storage cost.
+  // the ONS DB to any arbitrary height at a small additional storage cost.
   // return: if the record exists and hasn't expired.
   bool active(uint64_t blockchain_height) const;
   operator bool() const { return loaded; }
@@ -280,6 +283,8 @@ struct name_system_db
 
   owner_record                get_owner_by_key      (generic_owner const &owner);
   owner_record                get_owner_by_id       (int64_t owner_id);
+  // Returns a wallet address from the passed ONS name in "str"
+  bool  get_wallet_mapping    (std::string str, uint64_t blockchain_height, cryptonote::address_parse_info& addr_info);
   // The get_mapping* methods can return any mapping, or only active mappings: for only active
   // mappings, pass in the blockchain height.  If you omit it (or explicitly pass std::nullopt) then
   // you will get the latest mappingsvalues regardless of whether expired or not they are expired.
@@ -293,9 +298,9 @@ struct name_system_db
   // not found or expired, otherwise returns the encrypted value.
   std::optional<mapping_value> resolve(mapping_type type, std::string_view name_hash_b64, uint64_t blockchain_height);
 
-  // Validates an LNS transaction.  If the function returns true then entry will be populated with
-  // the LNS details.  On a false return, `reason` is instead populated with the failure reason.
-  bool validate_lns_tx(uint8_t hf_version, uint64_t blockchain_height, cryptonote::transaction const &tx, cryptonote::tx_extra_oxen_name_system &entry, std::string *reason);
+  // Validates an ONS transaction.  If the function returns true then entry will be populated with
+  // the ONS details.  On a false return, `reason` is instead populated with the failure reason.
+  bool validate_ons_tx(uint8_t hf_version, uint64_t blockchain_height, cryptonote::transaction const &tx, cryptonote::tx_extra_oxen_name_system &entry, std::string *reason);
 
   // Destructor; closes the sqlite3 database if one is open
   ~name_system_db();

@@ -77,17 +77,17 @@ struct extra_printer {
   void operator()(const tx_extra_tx_key_image_unlock& x) { std::cout << "TX key image unlock: " << x.key_image; }
   void operator()(const tx_extra_burn& x) { std::cout << "Transaction burned fee/payment: " << print_money(x.amount); }
   void operator()(const tx_extra_oxen_name_system& x) {
-    std::cout << "LNS " << (x.is_buying() ? "registration" : x.is_updating() ? "update" : "(unknown)");
+    std::cout << "ONS " << (x.is_buying() ? "registration" : x.is_updating() ? "update" : "(unknown)");
     switch (x.type)
     {
-      case lns::mapping_type::lokinet: std::cout << " - Lokinet (1y)"; break;
-      case lns::mapping_type::lokinet_2years: std::cout << " - Lokinet (2y)"; break;
-      case lns::mapping_type::lokinet_5years: std::cout << " - Lokinet (5y)"; break;
-      case lns::mapping_type::lokinet_10years: std::cout << " - Lokinet (10y)"; break;
-      case lns::mapping_type::session: std::cout << " - Session address"; break;
-      case lns::mapping_type::wallet: std::cout << " - Wallet address"; break;
-      case lns::mapping_type::update_record_internal:
-      case lns::mapping_type::_count:
+      case ons::mapping_type::lokinet: std::cout << " - Lokinet (1y)"; break;
+      case ons::mapping_type::lokinet_2years: std::cout << " - Lokinet (2y)"; break;
+      case ons::mapping_type::lokinet_5years: std::cout << " - Lokinet (5y)"; break;
+      case ons::mapping_type::lokinet_10years: std::cout << " - Lokinet (10y)"; break;
+      case ons::mapping_type::session: std::cout << " - Session address"; break;
+      case ons::mapping_type::wallet: std::cout << " - Wallet address"; break;
+      case ons::mapping_type::update_record_internal:
+      case ons::mapping_type::_count:
           break;
     }
   }

@@ -211,7 +211,7 @@ namespace cryptonote
 
         if (data.type == pool_data.type && data.name_hash == pool_data.name_hash)
         {
-          LOG_PRINT_L1("New TX: " << get_transaction_hash(tx) << ", has TX: " << get_transaction_hash(pool_tx) << " from the pool that is requesting the same LNS entry already.");
+          LOG_PRINT_L1("New TX: " << get_transaction_hash(tx) << ", has TX: " << get_transaction_hash(pool_tx) << " from the pool that is requesting the same ONS entry already.");
           return true;
         }
       }
@@ -1485,6 +1485,7 @@ namespace cryptonote
   bool tx_memory_pool::have_tx_keyimges_as_spent(const transaction& tx, std::vector<crypto::hash> *conflicting) const
   {
     auto locks = tools::unique_locks(m_transactions_lock, m_blockchain);
+
 
     bool ret = false;
     for(const auto& in: tx.vin)

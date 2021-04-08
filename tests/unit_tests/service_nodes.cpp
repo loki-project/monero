@@ -101,7 +101,7 @@ TEST(service_nodes, staking_requirement)
   // Just before drop to 15k
   {
     uint64_t height = 641110;
-    uint64_t mainnet_requirement  = service_nodes::get_staking_requirement(cryptonote::MAINNET, height, cryptonote::network_version_15_lns);
+    uint64_t mainnet_requirement  = service_nodes::get_staking_requirement(cryptonote::MAINNET, height, cryptonote::network_version_15_ons);
 
     uint64_t mainnet_expected = 16396'730529714;
     ASSERT_EQ(mainnet_requirement, mainnet_expected);

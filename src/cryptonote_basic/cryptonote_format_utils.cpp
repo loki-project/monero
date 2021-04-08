@@ -1544,20 +1544,20 @@ namespace cryptonote
 
 }
 
-std::string lns::generic_owner::to_string(cryptonote::network_type nettype) const
+std::string ons::generic_owner::to_string(cryptonote::network_type nettype) const
 {
-  if (type == lns::generic_owner_sig_type::monero)
+  if (type == ons::generic_owner_sig_type::monero)
     return cryptonote::get_account_address_as_str(nettype, wallet.is_subaddress, wallet.address);
   else
     return tools::type_to_hex(ed25519);
 }
 
-bool lns::generic_owner::operator==(generic_owner const &other) const
+bool ons::generic_owner::operator==(generic_owner const &other) const
 {
   if (type != other.type)
     return false;
 
-  if (type == lns::generic_owner_sig_type::monero)
+  if (type == ons::generic_owner_sig_type::monero)
     return wallet.is_subaddress == other.wallet.is_subaddress && wallet.address == other.wallet.address;
   else
     return ed25519 == other.ed25519;

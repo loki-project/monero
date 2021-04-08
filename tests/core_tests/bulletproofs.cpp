@@ -351,7 +351,7 @@ bool gen_bp_tx_valid_1_old::generate(std::vector<test_event_entry>& events) cons
 
 bool gen_bp_tx_invalid_1_new::generate(std::vector<test_event_entry>& events) const
 {
-  // After HF_VERSION_MIN_2_OUTPUTS we don't allow just one output (except in LNS transactions, but
+  // After HF_VERSION_MIN_2_OUTPUTS we don't allow just one output (except in ONS transactions, but
   // that is tested elsewhere).
   const uint64_t amounts_paid[] = {10000, (uint64_t)-1};
   const size_t bp_sizes[] = {1, (size_t)-1};

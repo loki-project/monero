@@ -123,7 +123,7 @@ namespace cryptonote {
 
     uint64_t base_reward =
       version >= network_version_17 ? BLOCK_REWARD_HF17 :
-      version >= network_version_15_lns ? BLOCK_REWARD_HF15 :
+      version >= network_version_15_ons ? BLOCK_REWARD_HF15 :
       version >= network_version_8  ? block_reward_unpenalized_formula_v8(height) :
         block_reward_unpenalized_formula_v7(already_generated_coins, height);
 
@@ -305,3 +305,10 @@ namespace cryptonote {
     return cryptonote::get_block_hash(a) == cryptonote::get_block_hash(b);
   }
 }
+
+KV_SERIALIZE_MAP_CODE_BEGIN(cryptonote::address_parse_info)
+  KV_SERIALIZE(address)
+  KV_SERIALIZE(is_subaddress)
+  KV_SERIALIZE(has_payment_id)
+  KV_SERIALIZE_VAL_POD_AS_BLOB_FORCE(payment_id)
+KV_SERIALIZE_MAP_CODE_END()

@@ -1,22 +1,22 @@
 // Copyright (c) 2014-2019, The Monero Project
 // Copyright (c)      2018, The Loki Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -26,7 +26,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #pragma once
@@ -218,7 +218,7 @@ namespace tools::wallet_rpc {
 
     struct request
     {
-      cryptonote::subaddress_index index; // Major & minor address index 
+      cryptonote::subaddress_index index; // Major & minor address index
       std::string label;                  // Label for the address.
 
       KV_MAP_SERIALIZABLE
@@ -395,7 +395,7 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Send oxen to a number of recipients. To preview the transaction fee, set do_not_relay to true and get_tx_metadata to true. 
+  // Send oxen to a number of recipients. To preview the transaction fee, set do_not_relay to true and get_tx_metadata to true.
   // Submit the response using the data in get_tx_metadata in the RPC call, relay_tx.
   struct TRANSFER : RESTRICTED
   {
@@ -500,7 +500,7 @@ namespace tools::wallet_rpc {
       uint64_t change_amount;          // Change received from transaction in atomic units.
       std::string change_address;      // Address the change was sent to.
       uint64_t fee;                    // Fee of the transaction in atomic units.
-      uint32_t dummy_outputs;          // 
+      uint32_t dummy_outputs;          //
       std::string extra;               // Data stored in the tx extra represented in hex.
 
       KV_MAP_SERIALIZABLE
@@ -587,7 +587,7 @@ namespace tools::wallet_rpc {
 
     struct key_list
     {
-      std::list<std::string> keys; 
+      std::list<std::string> keys;
 
       KV_MAP_SERIALIZABLE
     };
@@ -599,7 +599,7 @@ namespace tools::wallet_rpc {
       std::list<uint64_t> amount_list;         // The amount transferred for every transaction.
       std::list<uint64_t> fee_list;            // The amount of fees paid for every transaction.
       std::list<std::string> tx_blob_list;     // The tx as hex string for every transaction.
-      std::list<std::string> tx_metadata_list; // List of transaction metadata needed to relay the transactions later. 
+      std::list<std::string> tx_metadata_list; // List of transaction metadata needed to relay the transactions later.
       std::string multisig_txset;              // The set of signing keys used in a multisig transaction (empty for non-multisig).
       std::string unsigned_txset;              // Set of unsigned tx for cold-signing purposes.
 
@@ -620,7 +620,7 @@ namespace tools::wallet_rpc {
       std::set<uint32_t> subaddr_indices; // (Optional) Sweep from this set of subaddresses in the account.
       bool subaddr_indices_all;           //
       uint32_t priority;                  // Set a priority for the transaction. Accepted values are: 1 for unimportant or 5 for blink. (0 and 2-4 are accepted for backwards compatibility and are equivalent to 5)
-      uint64_t outputs;                   // 
+      uint64_t outputs;                   //
       uint64_t unlock_time;               // Number of blocks before the oxen can be spent (0 to not add a lock).
       std::string payment_id;             // (Optional) 64-character hex string to identify a transaction.
       bool get_tx_keys;                   // (Optional) Return the transaction keys after sending.
@@ -664,7 +664,7 @@ namespace tools::wallet_rpc {
     {
       std::string address;    // Destination public address.
       uint32_t priority;      // Set a priority for the transaction. Accepted values are: 1 for unimportant or 5 for blink. (0 and 2-4 are accepted for backwards compatibility and are equivalent to 5)
-      uint64_t outputs;       // 
+      uint64_t outputs;       //
       uint64_t unlock_time;   // Number of blocks before the oxen can be spent (0 to not add a lock).
       std::string payment_id; // (Optional) 64-character hex string to identify a transaction.
       bool get_tx_key;        // (Optional) Return the transaction keys after sending.
@@ -692,7 +692,7 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Relay transaction metadata to the daemon 
+  // Relay transaction metadata to the daemon
   struct RELAY_TX : RPC_COMMAND
   {
     static constexpr auto names() { return NAMES("relay_tx"); }
@@ -725,7 +725,7 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // 
+  //
   struct payment_details
   {
     std::string payment_id;                     // Payment ID matching the input parameter.
@@ -762,11 +762,11 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Get a list of incoming payments using a given payment id, 
-  // or a list of payments ids, from a given height. 
+  // Get a list of incoming payments using a given payment id,
+  // or a list of payments ids, from a given height.
   //
-  // This method is the preferred method over  get_paymentsbecause it 
-  // has the same functionality but is more extendable. 
+  // This method is the preferred method over  get_paymentsbecause it
+  // has the same functionality but is more extendable.
   // Either is fine for looking up transactions by a single payment ID.
   struct GET_BULK_PAYMENTS : RPC_COMMAND
   {
@@ -782,14 +782,14 @@ namespace tools::wallet_rpc {
 
     struct response
     {
-      std::list<payment_details> payments; // List of payment details: 
+      std::list<payment_details> payments; // List of payment details:
 
       KV_MAP_SERIALIZABLE
     };
   };
-  
+
   OXEN_RPC_DOC_INTROSPECT
-  // 
+  //
   struct transfer_details
   {
     uint64_t amount;                            // Amount of this transfer.
@@ -865,7 +865,7 @@ namespace tools::wallet_rpc {
 
     struct response
     {
-      std::string integrated_address; // 
+      std::string integrated_address; //
       std::string payment_id;         // Hex encoded.
 
       KV_MAP_SERIALIZABLE
@@ -880,16 +880,16 @@ namespace tools::wallet_rpc {
 
     struct request
     {
-      std::string integrated_address; // 
+      std::string integrated_address; //
 
       KV_MAP_SERIALIZABLE
     };
 
     struct response
     {
-      std::string standard_address; // 
-      std::string payment_id;       // 
-      bool is_subaddress;           // 
+      std::string standard_address; //
+      std::string payment_id;       //
+      bool is_subaddress;           //
 
       KV_MAP_SERIALIZABLE
     };
@@ -907,10 +907,10 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Rescan the blockchain from scratch, losing any information 
+  // Rescan the blockchain from scratch, losing any information
   // which can not be recovered from the blockchain itself.
   // This includes destination addresses, tx secret keys, tx notes, etc.
-  
+
   // Warning: This blocks the Wallet RPC executable until rescanning is complete.
   struct RESCAN_BLOCKCHAIN : RESTRICTED
   {
@@ -918,7 +918,7 @@ namespace tools::wallet_rpc {
 
     struct request
     {
-      bool hard; // 
+      bool hard; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -1187,7 +1187,7 @@ namespace tools::wallet_rpc {
     {
       bool good;      // States if the inputs proves the reserve.
       uint64_t total; //
-      uint64_t spent; // 
+      uint64_t spent; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -1310,7 +1310,7 @@ namespace tools::wallet_rpc {
 
     struct response
     {
-      bool good; // 
+      bool good; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -1373,8 +1373,8 @@ namespace tools::wallet_rpc {
 
     struct signed_key_image
     {
-      std::string key_image; // 
-      std::string signature; // 
+      std::string key_image; //
+      std::string signature; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -1412,7 +1412,7 @@ namespace tools::wallet_rpc {
 
     struct response
     {
-      uint64_t height;  
+      uint64_t height;
       uint64_t spent;   // Amount (in atomic units) spent from those key images.
       uint64_t unspent; // Amount (in atomic units) still available from those key images.
 
@@ -1464,7 +1464,7 @@ namespace tools::wallet_rpc {
     struct response
     {
       uri_spec uri;                                // JSON object containing payment information:
-      std::vector<std::string> unknown_parameters; // 
+      std::vector<std::string> unknown_parameters; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -1764,7 +1764,7 @@ namespace tools::wallet_rpc {
       uint64_t restore_height; // Height in which to start scanning the blockchain for transactions into and out of this Wallet.
       std::string filename;    // Set the name of the Wallet.
       std::string seed;        // Mnemonic seed of wallet (25 words).
-      std::string seed_offset; // 
+      std::string seed_offset; //
       std::string password;    // Set password for Wallet.
       std::string language;    // Set language for the wallet.
       bool autosave_current;   // (Optional: Default true): If a pre-existing wallet is open, save to disk before opening the new wallet.
@@ -1777,12 +1777,12 @@ namespace tools::wallet_rpc {
       std::string address; // Public address of wallet.
       std::string seed;    // Seed of wallet.
       std::string info;    // Wallet information.
-      bool was_deprecated; // 
+      bool was_deprecated; //
 
       KV_MAP_SERIALIZABLE
     };
   };
-  
+
   OXEN_RPC_DOC_INTROSPECT
   // Check if a wallet is a multisig one.
   struct IS_MULTISIG : RPC_COMMAND
@@ -1794,7 +1794,7 @@ namespace tools::wallet_rpc {
     struct response
     {
       bool multisig;      // States if the wallet is multisig.
-      bool ready;         // 
+      bool ready;         //
       uint32_t threshold; // Amount of signature needed to sign a transfer.
       uint32_t total;     // Total amount of signature in the multisig wallet.
 
@@ -1902,7 +1902,7 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // 
+  //
   struct EXCHANGE_MULTISIG_KEYS : RESTRICTED
   {
     static constexpr auto names() { return NAMES("exchange_multisig_keys"); }
@@ -2072,7 +2072,7 @@ namespace tools::wallet_rpc {
       KV_MAP_SERIALIZABLE
     };
   };
-  
+
   OXEN_RPC_DOC_INTROSPECT
   // Check if Service Node can unlock its stake.
   struct CAN_REQUEST_STAKE_UNLOCK : RESTRICTED
@@ -2094,7 +2094,7 @@ namespace tools::wallet_rpc {
       KV_MAP_SERIALIZABLE
     };
   };
-  
+
   OXEN_RPC_DOC_INTROSPECT
   // Parse an address to validate if it's a valid Loki address.
   struct VALIDATE_ADDRESS : RPC_COMMAND
@@ -2104,8 +2104,8 @@ namespace tools::wallet_rpc {
     struct request
     {
       std::string address;  // Address to check.
-      bool any_net_type;    // 
-      bool allow_openalias; // 
+      bool any_net_type;    //
+      bool allow_openalias; //
 
       KV_MAP_SERIALIZABLE
     };
@@ -2179,30 +2179,30 @@ namespace tools::wallet_rpc {
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  struct LNS_BUY_MAPPING : RESTRICTED
+  struct ONS_BUY_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_buy_mapping"); }
+    static constexpr auto names() { return NAMES("ons_buy_mapping"); }
 
     static constexpr const char *description =
-R"(Buy a Loki Name System (LNS) mapping that maps a unique name to a Session ID or Lokinet address.
+R"(Buy a Loki Name System (ONS) mapping that maps a unique name to a Session ID or Lokinet address.
 
-Currently supports Session and Lokinet registrations. Lokinet registrations can be for 1, 2, 5, or 10 years by specifying a type value of "lokinet", "lokinet_2y", "lokinet_5y", "lokinet_10y". Session registrations do not expire.
+Currently supports Session, Lokinet and Wallet registrations. Lokinet registrations can be for 1, 2, 5, or 10 years by specifying a type value of "lokinet", "lokinet_2y", "lokinet_5y", "lokinet_10y". Session registrations do not expire.
 
-The owner of the LNS entry (by default, the purchasing wallet) will be permitted to submit LNS update transactions to the Loki blockchain (for example to update a Session pubkey or the target Lokinet address). You may change the primary owner or add a backup owner in the registration and can change them later with update transactions. Owner addresses can be either Loki wallets, or generic ed25519 pubkeys (for advanced uses).
+The owner of the ONS entry (by default, the purchasing wallet) will be permitted to submit ONS update transactions to the Loki blockchain (for example to update a Session pubkey or the target Lokinet address). You may change the primary owner or add a backup owner in the registration and can change them later with update transactions. Owner addresses can be either Loki wallets, or generic ed25519 pubkeys (for advanced uses).
 
 For Session, the recommended owner or backup owner is the ed25519 public key of the user's Session ID.
 
 When specifying owners, either a wallet (sub)address or standard ed25519 public key is supported per mapping. Updating the value that a name maps to requires one of the owners to sign the update transaction. For wallets, this is signed using the (sub)address's spend key.
 
-For more information on updating and signing see the LNS_UPDATE_MAPPING documentation.)";
+For more information on updating and signing see the ONS_UPDATE_MAPPING documentation.)";
 
     struct request
     {
-      std::string        type;            // The mapping type: "session", "lokinet", "lokinet_2y", "lokinet_5y", "lokinet_10y".
+      std::string        type;            // The mapping type: "session", "lokinet", "lokinet_2y", "lokinet_5y", "lokinet_10y", "wallet".
       std::string        owner;           // (Optional): The ed25519 public key or wallet address that has authority to update the mapping.
       std::string        backup_owner;    // (Optional): The secondary, backup public key that has authority to update the mapping.
-      std::string        name;            // The name to purchase via Loki Name Service
-      std::string        value;           // The value that the name maps to via Loki Name Service, (i.e. For Session: [display name->session public key]. In future, for wallets: [name->wallet address], for Lokinet: [name->domain name]).
+      std::string        name;            // The name to purchase via Oxen Name Service
+      std::string        value;           // The value that the name maps to via Oxen Name Service, (i.e. For Session: [display name->session public key],  for wallets: [name->wallet address], for Lokinet: [name->domain name]).
 
       uint32_t           account_index;   // (Optional) Transfer from this account index. (Defaults to 0)
       std::set<uint32_t> subaddr_indices; // (Optional) Transfer from this set of subaddresses. (Defaults to 0)
@@ -2231,10 +2231,10 @@ For more information on updating and signing see the LNS_UPDATE_MAPPING document
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Renew an active lokinet LNS registration
-  struct LNS_RENEW_MAPPING : RESTRICTED
+  // Renew an active lokinet ONS registration
+  struct ONS_RENEW_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_renew_mapping"); }
+    static constexpr auto names() { return NAMES("ons_renew_mapping"); }
 
     static constexpr const char *description =
 R"(Renews a Loki Name System lokinet mapping by adding to the existing expiry time.
@@ -2257,14 +2257,14 @@ The renewal can be for 1, 2, 5, or 10 years by specifying a `type` value of "lok
       KV_MAP_SERIALIZABLE
     };
 
-    using response = LNS_BUY_MAPPING::response;
+    using response = ONS_BUY_MAPPING::response;
   };
 
   OXEN_RPC_DOC_INTROSPECT
   // Update the underlying value in the name->value mapping via Loki Name Service.
-  struct LNS_UPDATE_MAPPING : RESTRICTED
+  struct ONS_UPDATE_MAPPING : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_update_mapping"); }
+    static constexpr auto names() { return NAMES("ons_update_mapping"); }
 
     static constexpr const char *description =
 R"(Update a Loki Name System mapping to refer to a new address or owner.
@@ -2273,11 +2273,11 @@ At least one field (value, owner, or backup owner) must be specified in the upda
 
 The existing owner (wallet address or ed25519 public key) of the mapping must be used to sign the update. If no signature is provided then the wallet's active address (or subaddress) will be used to sign the update.
 
-If signing is performed externally then you must first encrypt the `value` (if being updated), then sign a BLAKE2b hash of {encryptedvalue || owner || backup_owner || txid} (where txid is the most recent LNS update or registration transaction of this mapping; each of encrypted/owner/backup are empty strings if not being updated). For a wallet owner this is signed using the owning wallet's spend key; for a Ed25519 key this is a standard Ed25519 signature.)";
+If signing is performed externally then you must first encrypt the `value` (if being updated), then sign a BLAKE2b hash of {encryptedvalue || owner || backup_owner || txid} (where txid is the most recent ONS update or registration transaction of this mapping; each of encrypted/owner/backup are empty strings if not being updated). For a wallet owner this is signed using the owning wallet's spend key; for a Ed25519 key this is a standard Ed25519 signature.)";
 
     struct request
     {
-      std::string        type;      // The mapping type, "session" or "lokinet".
+      std::string        type;      // The mapping type, "session", "lokinet", or "wallet".
       std::string        name;      // The name to update via Loki Name Service
       std::string        value;     // (Optional): The new value that the name maps to via Loki Name Service. If not specified or given the empty string "", then the mapping's value remains unchanged. If using a `signature` then this value (if non-empty) must be already encrypted.
       std::string        owner;     // (Optional): The new owner of the mapping. If not specified or given the empty string "", then the mapping's owner remains unchanged.
@@ -2312,20 +2312,20 @@ If signing is performed externally then you must first encrypt the `value` (if b
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  struct LNS_MAKE_UPDATE_SIGNATURE : RESTRICTED
+  struct ONS_MAKE_UPDATE_SIGNATURE : RESTRICTED
   {
-    static constexpr auto names() { return NAMES("lns_make_update_mapping_signature"); }
+    static constexpr auto names() { return NAMES("ons_make_update_mapping_signature"); }
 
   static constexpr const char *description =
-R"(Generate the signature necessary for updating the requested record using the wallet's active [sub]address's spend key. The signature is only valid if the queried wallet is one of the owners of the LNS record.
+R"(Generate the signature necessary for updating the requested record using the wallet's active [sub]address's spend key. The signature is only valid if the queried wallet is one of the owners of the ONS record.
 
-This command is only required if the open wallet is one of the owners of a LNS record but wants the update transaction to occur via another non-owning wallet. By default, if no signature is specified to the update transaction, the open wallet is assumed the owner and it's active [sub]address's spend key will automatically be used.)";
+This command is only required if the open wallet is one of the owners of a ONS record but wants the update transaction to occur via another non-owning wallet. By default, if no signature is specified to the update transaction, the open wallet is assumed the owner and it's active [sub]address's spend key will automatically be used.)";
 
     struct request
     {
-      std::string type;  // The mapping type, currently we only support "session". In future "lokinet" and "blockchain" mappings will be available.
-      std::string name;  // The desired name to update via Loki Name Service
-      std::string encrypted_value; // (Optional): The new encrypted value that the name maps to via Loki Name Service. If not specified or given the empty string "", then the mapping's value remains unchanged.
+      std::string type;  // The mapping type, currently we support "session", "lokinet" and "wallet" mappings.
+      std::string name;  // The desired name to update via Oxen Name Service
+      std::string encrypted_value; // (Optional): The new encrypted value that the name maps to via Oxen Name Service. If not specified or given the empty string "", then the mapping's value remains unchanged.
       std::string owner;     // (Optional): The new owner of the mapping. If not specified or given the empty string "", then the mapping's owner remains unchanged.
       std::string backup_owner; // (Optional): The new backup owner of the mapping. If not specified or given the empty string "", then the mapping's backup owner remains unchanged.
       uint32_t account_index; // (Optional) Use this wallet's subaddress account for generating the signature
@@ -2335,21 +2335,21 @@ This command is only required if the open wallet is one of the owners of a LNS r
 
     struct response
     {
-      std::string signature; // A signature valid for using in LNS to update an underlying mapping.
+      std::string signature; // A signature valid for using in ONS to update an underlying mapping.
 
       KV_MAP_SERIALIZABLE
     };
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS name, upon validating it, generates the hash and returns the base64 representation of the hash suitable for use in the daemon LNS name queries.
-  struct LNS_HASH_NAME : RPC_COMMAND
+  // Takes a ONS name, upon validating it, generates the hash and returns the base64 representation of the hash suitable for use in the daemon ONS name queries.
+  struct ONS_HASH_NAME : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_hash_name"); }
+    static constexpr auto names() { return NAMES("ons_hash_name"); }
 
     struct request
     {
-      std::string type; // The mapping type, "session" or "lokinet".
+      std::string type; // The mapping type, "session", "lokinet" or "wallet".
       std::string name; // The desired name to hash
 
       KV_MAP_SERIALIZABLE
@@ -2364,12 +2364,12 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Returns a list of known, plain-text LNS names along with record details for names that this
-  // wallet knows about.  This can optionally decrypt the LNS value as well, or else just return the
+  // Returns a list of known, plain-text ONS names along with record details for names that this
+  // wallet knows about.  This can optionally decrypt the ONS value as well, or else just return the
   // encrypted value.
-  struct LNS_KNOWN_NAMES : RPC_COMMAND
+  struct ONS_KNOWN_NAMES : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_known_names"); }
+    static constexpr auto names() { return NAMES("ons_known_names"); }
 
     struct known_record
     {
@@ -2403,15 +2403,15 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Adds one or more names to the persistent LNS wallet cache of known names (i.e. for names that
+  // Adds one or more names to the persistent ONS wallet cache of known names (i.e. for names that
   // are owned by this wallet that aren't currently in the cache).
-  struct LNS_ADD_KNOWN_NAMES : RPC_COMMAND
+  struct ONS_ADD_KNOWN_NAMES : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_add_known_names"); }
+    static constexpr auto names() { return NAMES("ons_add_known_names"); }
 
     struct record
     {
-      std::string type; // The LNS type (mandatory); currently support values are: "session", "lokinet"
+      std::string type; // The ONS type (mandatory); currently support values are: "session", "lokinet"
       std::string name; // The (unhashed) name of the record
 
       KV_MAP_SERIALIZABLE
@@ -2428,14 +2428,14 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS encrypted value and encrypts the mapping value using the LNS name.
-  struct LNS_ENCRYPT_VALUE : RPC_COMMAND
+  // Takes a ONS encrypted value and encrypts the mapping value using the ONS name.
+  struct ONS_ENCRYPT_VALUE : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_encrypt_value"); }
+    static constexpr auto names() { return NAMES("ons_encrypt_value"); }
 
     struct request
     {
-      std::string name;            // The LNS name with which to encrypt the value.
+      std::string name;            // The ONS name with which to encrypt the value.
       std::string type;            // The mapping type: "session" or "lokinet".
       std::string value;           // The value to be encrypted.
 
@@ -2451,14 +2451,14 @@ This command is only required if the open wallet is one of the owners of a LNS r
   };
 
   OXEN_RPC_DOC_INTROSPECT
-  // Takes a LNS encrypted value and decrypts the mapping value using the LNS name.
-  struct LNS_DECRYPT_VALUE : RPC_COMMAND
+  // Takes a ONS encrypted value and decrypts the mapping value using the ONS name.
+  struct ONS_DECRYPT_VALUE : RPC_COMMAND
   {
-    static constexpr auto names() { return NAMES("lns_decrypt_value"); }
+    static constexpr auto names() { return NAMES("ons_decrypt_value"); }
 
     struct request
     {
-      std::string name;            // The LNS name of the given encrypted value.
+      std::string name;            // The ONS name of the given encrypted value.
       std::string type;            // The mapping type: "session" or "lokinet".
       std::string encrypted_value; // The encrypted value represented in hex.
 
@@ -2567,15 +2567,15 @@ This command is only required if the open wallet is one of the owners of a LNS r
     SET_DAEMON,
     SET_LOG_LEVEL,
     SET_LOG_CATEGORIES,
-    LNS_BUY_MAPPING,
-    LNS_UPDATE_MAPPING,
-    LNS_RENEW_MAPPING,
-    LNS_MAKE_UPDATE_SIGNATURE,
-    LNS_HASH_NAME,
-    LNS_KNOWN_NAMES,
-    LNS_ADD_KNOWN_NAMES,
-    LNS_DECRYPT_VALUE,
-    LNS_ENCRYPT_VALUE
+    ONS_BUY_MAPPING,
+    ONS_UPDATE_MAPPING,
+    ONS_RENEW_MAPPING,
+    ONS_MAKE_UPDATE_SIGNATURE,
+    ONS_HASH_NAME,
+    ONS_KNOWN_NAMES,
+    ONS_ADD_KNOWN_NAMES,
+    ONS_DECRYPT_VALUE,
+    ONS_ENCRYPT_VALUE
   >;
 
 }
