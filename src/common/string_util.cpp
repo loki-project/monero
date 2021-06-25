@@ -1,5 +1,6 @@
 #include "string_util.h"
 #include <cassert>
+#include <iomanip>
 #include <sstream>
 
 namespace tools {
@@ -113,5 +114,32 @@ std::string friendly_duration(std::chrono::nanoseconds dur) {
   }
   return os.str();
 }
+
+std::string short_duration(std::chrono::duration<double> dur) {
+    std::ostringstream os;
+    os << std::fixed << std::setprecision(1);
+    if (dur >= 36h)
+        os << dur / 24h;
+    else if (dur >= 90min)
+        os << dur / 1h;
+    else if (dur >= 90s)
+        os << dur / 1min;
+    else if (dur >= 1s)
+        os << dur / 1s;
+    else if (dur >= 100ms)
+        os << std::setprecision(0) << dur / 1ms;
+    else if (dur >= 1ms)
+        os << dur / 1ms;
+    else if (dur >= 100us)
+        os << std::setprecision(0) << dur / 1us;
+    else if (dur >= 1us)
+        os << dur / 1us;
+    else if (dur >= 1ns)
+        os << std::setprecision(0) << dur / 1ns;
+    else
+        os << "0s";
+    return os.str();
+}
+
 
 }
