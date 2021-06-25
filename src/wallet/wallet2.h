@@ -296,7 +296,7 @@ private:
         const std::function<std::optional<password_container>(const char *, bool)> &password_prompter);
 
     static bool verify_password(const fs::path& keys_file_name, const epee::wipeable_string& password, bool no_spend_key, hw::device &hwdev, uint64_t kdf_rounds);
-    static bool query_device(hw::device::device_type& device_type, const fs::path& keys_file_name, const epee::wipeable_string& password, uint64_t kdf_rounds = 1);
+    static bool query_device(hw::device::type& device_type, const fs::path& keys_file_name, const epee::wipeable_string& password, uint64_t kdf_rounds = 1);
 
     wallet2(cryptonote::network_type nettype = cryptonote::MAINNET, uint64_t kdf_rounds = 1, bool unattended = false);
     ~wallet2();
@@ -719,8 +719,8 @@ private:
     bool has_multisig_partial_key_images() const;
     bool has_unknown_key_images() const;
     bool get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase = std::string(), bool raw = true) const;
-    bool key_on_device() const { return get_device_type() != hw::device::device_type::SOFTWARE; }
-    hw::device::device_type get_device_type() const { return m_key_device_type; }
+    bool key_on_device() const { return get_device_type() != hw::device::type::SOFTWARE; }
+    hw::device::type get_device_type() const { return m_key_device_type; }
     bool reconnect_device();
 
     // locked & unlocked balance of given or current subaddress account
@@ -1555,7 +1555,7 @@ private:
     void cache_tx_data(const cryptonote::transaction& tx, const crypto::hash &txid, tx_cache_data &tx_cache_data) const;
     std::shared_ptr<std::map<std::pair<uint64_t, uint64_t>, size_t>> create_output_tracker_cache() const;
 
-    void init_type(hw::device::device_type device_type);
+    void init_type(hw::device::type device_type);
     void setup_new_blockchain();
     void create_keys_file(const fs::path &wallet_, bool watch_only, const epee::wipeable_string &password, bool create_address_file);
 
@@ -1606,7 +1606,7 @@ private:
 
     bool m_trusted_daemon;
     i_wallet2_callback* m_callback;
-    hw::device::device_type m_key_device_type;
+    hw::device::type m_key_device_type;
     cryptonote::network_type m_nettype;
     uint64_t m_kdf_rounds;
     std::string seed_language; /*!< Language of the mnemonics (seed). */

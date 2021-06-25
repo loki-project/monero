@@ -62,14 +62,6 @@ namespace cryptonote
 }
 
 namespace hw {
-    namespace {
-        //device funcion not supported
-        #define dfns()  \
-           throw std::runtime_error(std::string("device function not supported: ")+ std::string(__FUNCTION__) + \
-                                    std::string(" (device.hpp line ")+std::to_string(__LINE__)+std::string(").")); \
-           return false;
-    }
-
     class device_progress {
     public:
       virtual double progress() const { return 0; }
@@ -92,18 +84,22 @@ namespace hw {
 
     public:
 
-        device(): mode(NONE)  {}
-        device(const device &hwdev) {}
-        virtual ~device()   {}
+        device() = default;
+        device(const device&) = delete;
+        device& operator=(const device&) = delete;
+        device(device&&) = default;
+        device& operator=(device&&) = default;
 
-        explicit virtual operator bool() const = 0;
-        enum device_mode {
+        virtual ~device() = default;
+
+        virtual bool is_hardware_device() const = 0;
+        enum class mode {
             NONE,
             TRANSACTION_CREATE_REAL,
             TRANSACTION_CREATE_FAKE,
             TRANSACTION_PARSE
         };
-        enum device_type
+        enum class type
         {
           SOFTWARE = 0,
           LEDGER = 1,
@@ -111,10 +107,10 @@ namespace hw {
         };
 
 
-        enum device_protocol_t {
-            PROTOCOL_DEFAULT,
-            PROTOCOL_PROXY,     // Originally defined by Ledger
-            PROTOCOL_COLD,      // Originally defined by Trezor
+        enum class protocol {
+            DEFAULT,
+            PROXY,     // Originally defined by Ledger
+            COLD,      // Originally defined by Trezor
         };
 
         /* ======================================================================= */
@@ -123,18 +119,18 @@ namespace hw {
         virtual bool set_name(std::string_view name) = 0;
         virtual std::string get_name() const = 0;
 
-        virtual bool init(void) = 0;
+        virtual bool init() = 0;
         virtual bool release() = 0;
 
-        virtual bool connect(void) = 0;
-        virtual bool disconnect(void) = 0;
+        virtual bool connect() = 0;
+        virtual bool disconnect() = 0;
 
-        virtual bool set_mode(device_mode mode) { this->mode = mode; return true; }
-        virtual device_mode get_mode() const { return mode; }
+        virtual bool set_mode(mode m) { mode_ = m; return true; }
+        virtual mode get_mode() const { return mode_; }
 
-        virtual device_type get_type() const = 0;
+        virtual type get_type() const = 0;
 
-        virtual device_protocol_t device_protocol() const { return PROTOCOL_DEFAULT; };
+        virtual protocol device_protocol() const { return protocol::DEFAULT; };
         virtual void set_callback(i_device_callback * callback) {};
         virtual void set_derivation_path(const std::string &derivation_path) {};
 
@@ -144,9 +140,9 @@ namespace hw {
         /* ======================================================================= */
         /*  LOCKER                                                                 */
         /* ======================================================================= */ 
-        virtual void lock(void) = 0;
-        virtual void unlock(void) = 0;
-        virtual bool try_lock(void) = 0;
+        virtual void lock() = 0;
+        virtual void unlock() = 0;
+        virtual bool try_lock() = 0;
 
 
         /* ======================================================================= */
@@ -249,24 +245,24 @@ namespace hw {
         // secret key value, if necessary.
         virtual bool update_staking_tx_secret_key(crypto::secret_key& key) = 0;
 
-        virtual bool  close_tx(void) = 0;
+        virtual bool  close_tx() = 0;
 
-        virtual bool  has_ki_cold_sync(void) const { return false; }
-        virtual bool  has_tx_cold_sign(void) const { return false; }
-        virtual bool  has_ki_live_refresh(void) const { return true; }
+        virtual bool  has_ki_cold_sync() const { return false; }
+        virtual bool  has_tx_cold_sign() const { return false; }
+        virtual bool  has_ki_live_refresh() const { return true; }
         virtual bool  compute_key_image(const cryptonote::account_keys& ack, const crypto::public_key& out_key, const crypto::key_derivation& recv_derivation, size_t real_output_index, const cryptonote::subaddress_index& received_index, cryptonote::keypair& in_ephemeral, crypto::key_image& ki) { return false; }
         virtual void  computing_key_images(bool started) {};
         virtual void  set_network_type(cryptonote::network_type network_type) { }
         virtual void  display_address(const cryptonote::subaddress_index& index, const std::optional<crypto::hash8> &payment_id) {}
 
     protected:
-        device_mode mode;
-    } ;
+        mode mode_ = mode::NONE;
+    };
 
     struct mode_resetter {
         device& hwref;
         mode_resetter(hw::device& dev) : hwref(dev) { }
-        ~mode_resetter() { hwref.set_mode(hw::device::NONE);}
+        ~mode_resetter() { hwref.set_mode(hw::device::mode::NONE);}
     };
 
     class device_registry {
@@ -275,11 +271,11 @@ namespace hw {
 
     public:
       device_registry();
-      bool register_device(const std::string & device_name, device * hw_device);
-      device& get_device(const std::string & device_descriptor);
+      bool register_device(const std::string& device_name, device* hw_device);
+      device& get_device(const std::string& device_descriptor);
     };
 
     device& get_device(const std::string & device_descriptor);
-    bool register_device(const std::string & device_name, device * hw_device);
+    bool register_device(const std::string& device_name, device* hw_device);
 }
 

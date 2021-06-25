@@ -171,7 +171,7 @@ bool WalletManagerImpl::verifyWalletPassword(std::string_view keys_file_name, co
 EXPORT
 bool WalletManagerImpl::queryWalletDevice(Wallet::Device& device_type, std::string_view keys_file_name, const std::string &password, uint64_t kdf_rounds) const
 {
-    hw::device::device_type type;
+    hw::device::type type;
     bool r = tools::wallet2::query_device(type, fs::u8path(keys_file_name), password, kdf_rounds);
     device_type = static_cast<Wallet::Device>(type);
     return r;

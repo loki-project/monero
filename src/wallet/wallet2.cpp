@@ -1072,7 +1072,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended):
   m_light_wallet_unlocked_balance(0),
   m_original_keys_available(false),
   m_message_store(),
-  m_key_device_type(hw::device::device_type::SOFTWARE),
+  m_key_device_type(hw::device::type::SOFTWARE),
   m_ring_history_saved(false),
   m_ringdb(),
   m_last_block_reward(0),
@@ -1631,7 +1631,7 @@ void wallet2::check_acc_out_precomp(const tx_out &o, const crypto::key_derivatio
 {
   hw::device &hwdev = m_account.get_device();
   std::unique_lock hwdev_lock{hwdev};
-  hwdev.set_mode(hw::device::TRANSACTION_PARSE);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_PARSE);
   if (!std::holds_alternative<txout_to_key>(o.target))
   {
      tx_scan_info.error = true;
@@ -1910,7 +1910,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       std::unique_lock hwdev_lock{hwdev};
       hw::mode_resetter rst{hwdev};
 
-      hwdev.set_mode(hw::device::TRANSACTION_PARSE);
+      hwdev.set_mode(hw::device::mode::TRANSACTION_PARSE);
       if (!hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation))
       {
         MWARNING("Failed to generate key derivation from tx pubkey in " << txid << ", skipping");
@@ -1974,7 +1974,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
 
       hw::device &hwdev = m_account.get_device();
       std::unique_lock hwdev_lock{hwdev};
-      hwdev.set_mode(hw::device::NONE);
+      hwdev.set_mode(hw::device::mode::NONE);
       for (size_t i = 0; i < tx.vout.size(); ++i)
       {
         THROW_WALLET_EXCEPTION_IF(tx_scan_info[i].error, error::acc_outs_lookup_error, tx, tx_pub_key, m_account.get_keys());
@@ -1995,7 +1995,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         {
           hw::device &hwdev = m_account.get_device();
           std::unique_lock hwdev_lock{hwdev};
-          hwdev.set_mode(hw::device::NONE);
+          hwdev.set_mode(hw::device::mode::NONE);
           hwdev.conceal_derivation(tx_scan_info[i].received->derivation, tx_pub_key, additional_tx_pub_keys.data, derivation, additional_derivations);
           scan_output(tx, miner_tx, tx_pub_key, i, tx_scan_info[i], tx_money_got_in_outs, outs, pool, blink);
         }
@@ -2772,7 +2772,7 @@ void wallet2::process_parsed_blocks(uint64_t start_height, const std::vector<cry
 
   hw::device &hwdev =  m_account.get_device();
   hw::mode_resetter rst{hwdev};
-  hwdev.set_mode(hw::device::TRANSACTION_PARSE);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_PARSE);
   const cryptonote::account_keys &keys = m_account.get_keys();
 
   auto gender = [&](wallet2::is_out_data &iod) {
@@ -2846,7 +2846,7 @@ void wallet2::process_parsed_blocks(uint64_t start_height, const std::vector<cry
   }
   THROW_WALLET_EXCEPTION_IF(txidx != tx_cache_data.size(), error::wallet_internal_error, "txidx did not reach expected value");
   waiter.wait(&tpool);
-  hwdev.set_mode(hw::device::NONE);
+  hwdev.set_mode(hw::device::mode::NONE);
 
   size_t tx_cache_data_offset = 0;
   for (size_t i = 0; i < blocks.size(); ++i)
@@ -3943,7 +3943,7 @@ std::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee::w
 
   rapidjson::Value value2(rapidjson::kNumberType);
 
-  value2.SetInt(m_key_device_type);
+  value2.SetInt(static_cast<int>(m_key_device_type));
   json.AddMember("key_on_device", value2, json.GetAllocator());
 
   value2.SetInt(watch_only ? 1 :0); // WTF ? JSON has different true and false types, and not boolean ??
@@ -4222,7 +4222,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_export_format = ExportFormat::Binary;
     m_device_name = "";
     m_device_derivation_path = "";
-    m_key_device_type = hw::device::device_type::SOFTWARE;
+    m_key_device_type = hw::device::type::SOFTWARE;
     encrypted_secret_keys = false;
   }
   else if(json.IsObject())
@@ -4242,8 +4242,8 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
     if (json.HasMember("key_on_device"))
     {
-      GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, key_on_device, int, Int, false, hw::device::device_type::SOFTWARE);
-      m_key_device_type = static_cast<hw::device::device_type>(field_key_on_device);
+      GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, key_on_device, int, Int, false, hw::device::type::SOFTWARE);
+      m_key_device_type = static_cast<hw::device::type>(field_key_on_device);
     }
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, seed_language, std::string, String, false, std::string());
@@ -4397,7 +4397,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
       }
       else
       {
-        m_device_name = m_key_device_type == hw::device::device_type::LEDGER ? "Ledger" : "default";
+        m_device_name = m_key_device_type == hw::device::type::LEDGER ? "Ledger" : "default";
       }
     }
 
@@ -4441,7 +4441,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
   bool r = epee::serialization::load_t_from_binary(m_account, account_data);
   THROW_WALLET_EXCEPTION_IF(!r, error::invalid_password);
-  if (m_key_device_type == hw::device::device_type::LEDGER || m_key_device_type == hw::device::device_type::TREZOR) {
+  if (m_key_device_type == hw::device::type::LEDGER || m_key_device_type == hw::device::type::TREZOR) {
     LOG_PRINT_L0("Account on device. Initing device...");
     hw::device &hwdev = lookup_device(m_device_name);
     THROW_WALLET_EXCEPTION_IF(!hwdev.set_name(m_device_name), error::wallet_internal_error, "Could not set device name " + m_device_name);
@@ -4478,7 +4478,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
   const cryptonote::account_keys& keys = m_account.get_keys();
   hw::device &hwdev = m_account.get_device();
   r = r && hwdev.verify_keys(keys.m_view_secret_key,  keys.m_account_address.m_view_public_key);
-  if (!m_watch_only && !m_multisig && hwdev.device_protocol() != hw::device::PROTOCOL_COLD)
+  if (!m_watch_only && !m_multisig && hwdev.device_protocol() != hw::device::protocol::COLD)
     r = r && hwdev.verify_keys(keys.m_spend_secret_key, keys.m_account_address.m_spend_public_key);
   THROW_WALLET_EXCEPTION_IF(!r, error::wallet_files_doesnt_correspond, m_keys_file, m_wallet_file);
 
@@ -4502,7 +4502,7 @@ bool wallet2::verify_password(const epee::wipeable_string& password)
 {
   // this temporary unlocking is necessary for Windows (otherwise the file couldn't be loaded).
   unlock_keys_file();
-  bool r = verify_password(m_keys_file, password, m_account.get_device().device_protocol() == hw::device::PROTOCOL_COLD || m_watch_only || m_multisig, m_account.get_device(), m_kdf_rounds);
+  bool r = verify_password(m_keys_file, password, m_account.get_device().device_protocol() == hw::device::protocol::COLD || m_watch_only || m_multisig, m_account.get_device(), m_kdf_rounds);
   lock_keys_file();
   return r;
 }
@@ -4631,7 +4631,7 @@ void wallet2::create_keys_file(const fs::path &wallet_, bool watch_only, const e
 
 /*!
  * \brief determine the key storage for the specified wallet file
- * \param device_type     (OUT) wallet backend as enumerated in hw::device::device_type
+ * \param device_type     (OUT) wallet backend as enumerated in hw::device::type
  * \param keys_file_name  Keys file to verify password for
  * \param password        Password to verify
  * \return                true if password correct, else false
@@ -4639,7 +4639,7 @@ void wallet2::create_keys_file(const fs::path &wallet_, bool watch_only, const e
  * for verification only - determines key storage hardware
  *
  */
-bool wallet2::query_device(hw::device::device_type& device_type, const fs::path& keys_file_name, const epee::wipeable_string& password, uint64_t kdf_rounds)
+bool wallet2::query_device(hw::device::type& device_type, const fs::path& keys_file_name, const epee::wipeable_string& password, uint64_t kdf_rounds)
 {
   rapidjson::Document json;
   wallet2::keys_file_data keys_file_data;
@@ -4661,7 +4661,7 @@ bool wallet2::query_device(hw::device::device_type& device_type, const fs::path&
   if (json.Parse(account_data.c_str()).HasParseError() || !json.IsObject())
     crypto::chacha8(keys_file_data.account_data.data(), keys_file_data.account_data.size(), key, keys_file_data.iv, &account_data[0]);
 
-  device_type = hw::device::device_type::SOFTWARE;
+  device_type = hw::device::type::SOFTWARE;
   // The contents should be JSON if the wallet follows the new format.
   if (json.Parse(account_data.c_str()).HasParseError())
   {
@@ -4674,8 +4674,8 @@ bool wallet2::query_device(hw::device::device_type& device_type, const fs::path&
 
     if (json.HasMember("key_on_device"))
     {
-      GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, key_on_device, int, Int, false, hw::device::device_type::SOFTWARE);
-      device_type = static_cast<hw::device::device_type>(field_key_on_device);
+      GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, key_on_device, int, Int, false, hw::device::type::SOFTWARE);
+      device_type = static_cast<hw::device::type>(field_key_on_device);
     }
   }
 
@@ -4686,7 +4686,7 @@ bool wallet2::query_device(hw::device::device_type& device_type, const fs::path&
   return true;
 }
 
-void wallet2::init_type(hw::device::device_type device_type)
+void wallet2::init_type(hw::device::type device_type)
 {
   m_account_public_address = m_account.get_keys().m_account_address;
   m_watch_only = false;
@@ -4769,7 +4769,7 @@ void wallet2::generate(const fs::path& wallet_, const epee::wipeable_string& pas
   // Not possible to restore a multisig wallet that is able to activate the MMS
   // (because the original keys are not (yet) part of the restore info), so
   // keep m_original_keys_available to false
-  init_type(hw::device::device_type::SOFTWARE);
+  init_type(hw::device::type::SOFTWARE);
   m_multisig = true;
   m_multisig_threshold = threshold;
   m_multisig_signers = multisig_signers;
@@ -4807,7 +4807,7 @@ crypto::secret_key wallet2::generate(const fs::path& wallet_, const epee::wipeab
 
   crypto::secret_key retval = m_account.generate(recovery_param, recover, two_random);
 
-  init_type(hw::device::device_type::SOFTWARE);
+  init_type(hw::device::type::SOFTWARE);
   setup_keys(password);
 
   // calculate a starting refresh height
@@ -4886,7 +4886,7 @@ void wallet2::generate(const fs::path& wallet_, const epee::wipeable_string& pas
   }
 
   m_account.create_from_viewkey(account_public_address, viewkey);
-  init_type(hw::device::device_type::SOFTWARE);
+  init_type(hw::device::type::SOFTWARE);
   m_watch_only = true;
   m_account_public_address = account_public_address;
   setup_keys(password);
@@ -4923,7 +4923,7 @@ void wallet2::generate(const fs::path& wallet_, const epee::wipeable_string& pas
   }
 
   m_account.create_from_keys(account_public_address, spendkey, viewkey);
-  init_type(hw::device::device_type::SOFTWARE);
+  init_type(hw::device::type::SOFTWARE);
   m_account_public_address = account_public_address;
   setup_keys(password);
 
@@ -5105,7 +5105,7 @@ std::string wallet2::make_multisig(const epee::wipeable_string &password,
       "Failed to create multisig wallet due to bad keys");
   memwipe(&spend_skey, sizeof(rct::key));
 
-  init_type(hw::device::device_type::SOFTWARE);
+  init_type(hw::device::type::SOFTWARE);
   m_original_keys_available = true;
   m_multisig = true;
   m_multisig_threshold = threshold;
@@ -7249,7 +7249,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
     }
 
     // compute derivations
-    hwdev.set_mode(hw::device::TRANSACTION_PARSE);
+    hwdev.set_mode(hw::device::mode::TRANSACTION_PARSE);
     if (!hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation))
     {
       MWARNING("Failed to generate key derivation from tx pubkey in " << cryptonote::get_transaction_hash(tx) << ", skipping");
@@ -11103,7 +11103,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   std::vector<size_t>* unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
   std::vector<size_t>* unused_dust_indices      = &unused_dust_indices_per_subaddr[0].second;
 
-  hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_CREATE_FAKE);
   while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
     TX &tx = txes.back();
 
@@ -11338,7 +11338,7 @@ skip_tx:
   LOG_PRINT_L1("Done creating " << txes.size() << " transactions, " << print_money(accumulated_fee) <<
     " total fee, " << print_money(accumulated_change) << " total change");
 
-  hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_CREATE_REAL);
   for (auto &tx : txes)
   {
     // Convert burn percent into a fixed burn amount because this is the last place we can back out
@@ -11595,7 +11595,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
   needed_fee = 0;
 
   // while we have something to send
-  hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_CREATE_FAKE);
   while (!unused_dust_indices.empty() || !unused_transfers_indices.empty()) {
     TX &tx = txes.back();
 
@@ -11709,7 +11709,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
   LOG_PRINT_L1("Done creating " << txes.size() << " transactions, " << print_money(accumulated_fee) <<
     " total fee, " << print_money(accumulated_change) << " total change");
 
-  hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
+  hwdev.set_mode(hw::device::mode::TRANSACTION_CREATE_REAL);
   for (auto &tx : txes)
   {
     // Convert burn percent into a fixed burn amount because this is the last place we can back out
@@ -12041,7 +12041,7 @@ bool wallet2::get_tx_key(const crypto::hash &txid, crypto::secret_key &tx_key, s
   auto & hwdev = get_account().get_device();
 
   // So far only Cold protocol devices are supported.
-  if (hwdev.device_protocol() != hw::device::PROTOCOL_COLD)
+  if (hwdev.device_protocol() != hw::device::protocol::COLD)
   {
     return false;
   }

@@ -781,7 +781,7 @@ namespace rct {
         if (rct_config.range_proof_type == RangeProofType::PaddedBulletproof)
         {
             rct::keyV C, masks;
-            if (hwdev.get_mode() == hw::device::TRANSACTION_CREATE_FAKE)
+            if (hwdev.get_mode() == hw::device::mode::TRANSACTION_CREATE_FAKE)
             {
                 // use a fake bulletproof for speed
                 rv.p.bulletproofs.push_back(make_dummy_bulletproof(outamounts, C, masks));
@@ -810,7 +810,7 @@ namespace rct {
             std::vector<uint64_t> batch_amounts(batch_size);
             for (i = 0; i < batch_size; ++i)
               batch_amounts[i] = outamounts[i + amounts_proved];
-            if (hwdev.get_mode() == hw::device::TRANSACTION_CREATE_FAKE)
+            if (hwdev.get_mode() == hw::device::mode::TRANSACTION_CREATE_FAKE)
             {
                 // use a fake bulletproof for speed
                 rv.p.bulletproofs.push_back(make_dummy_bulletproof(batch_amounts, C, masks));

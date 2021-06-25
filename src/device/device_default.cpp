@@ -40,18 +40,15 @@
 #include "cryptonote_config.h"
 #include <sodium/crypto_generichash.h>
 
-namespace hw {
-
-    namespace core {
-
-        device_default::device_default() { }
-
-        device_default::~device_default() { }
+namespace hw::core {
 
         /* ===================================================================== */
         /* ===                        Misc                                ==== */
         /* ===================================================================== */
-        static inline unsigned char *operator &(crypto::ec_scalar &scalar) {
+
+        // EW, this crap is NASTY.  See the comment/TODO in crypto/crypto.cpp (which is where this
+        // nasty crap was copied from).
+        static inline unsigned char* operator &(crypto::ec_scalar &scalar) {
             return &reinterpret_cast<unsigned char &>(scalar);
         }
         static inline const unsigned char *operator &(const crypto::ec_scalar &scalar) {
@@ -61,30 +58,26 @@ namespace hw {
         /* ======================================================================= */
         /*                              SETUP/TEARDOWN                             */
         /* ======================================================================= */
-        bool device_default::set_name(std::string_view name) {
-            this->name = name;
+        bool device_default::set_name(std::string_view n) {
+            name = n;
             return true;
         }
         std::string device_default::get_name() const {
             return name;
         }
         
-        bool device_default::init(void) {
+        bool device_default::init() {
             return true;
         }
         bool device_default::release() {
             return true;
         }
 
-        bool device_default::connect(void) {
+        bool device_default::connect() {
             return true;
         }
         bool device_default::disconnect() {
             return true;
-        }
-
-        bool  device_default::set_mode(device_mode mode) {
-            return device::set_mode(mode);
         }
 
         /* ======================================================================= */
@@ -112,10 +105,10 @@ namespace hw {
             return true;
         }
         bool  device_default::get_public_address(cryptonote::account_public_address &pubkey) {
-             dfns();
+           throw std::runtime_error{"device function not supported: get_public_address"};
         }
         bool  device_default::get_secret_keys(crypto::secret_key &viewkey , crypto::secret_key &spendkey)  {
-             dfns();
+           throw std::runtime_error{"device function not supported: get_secret_keys"};
         }
         /* ======================================================================= */
         /*                               SUB ADDRESS                               */
@@ -441,19 +434,10 @@ namespace hw {
             return true;
         }
 
-
-        /* ---------------------------------------------------------- */
-        static device_default *default_core_device = NULL;
         void register_all(std::map<std::string, std::unique_ptr<device>> &registry) {
-            if (!default_core_device) {
-                default_core_device = new device_default();
-                default_core_device->set_name("default_core_device");
-
-            }
-            registry.insert(std::make_pair("default", std::unique_ptr<device>(default_core_device)));
+            auto dev = std::make_unique<device_default>();
+            dev->set_name("default_core_device");
+            registry.emplace("default", std::move(dev));
         }
-
-
-    }
 
 }
