@@ -28,6 +28,7 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include "device/io_ledger_tcp.hpp"
 #include "io_hid.hpp"
 #include "version.h"
 #include "device_ledger.hpp"
@@ -313,12 +314,20 @@ namespace hw::ledger {
     static_assert(BLAKE2B_HASH_CHUNK_SIZE <= 254, "Max BLAKE2b data chunk size exceeds the protocol limit");
 
 
-    device_ledger::device_ledger(): hw_device(0x0101, 0x05, 64, 2000) {
+    device_ledger::device_ledger() : hw_device{std::make_unique<io::hid>(0x0101, 0x05, 64, 2000)} {
       id = device_id++;
       reset_buffer();
       has_view_key = false;
       tx_in_progress = false;
       MDEBUG("Device " << id << " Created");
+    }
+
+    device_ledger::device_ledger(io::ledger_tcp&& tcp) : hw_device{std::make_unique<io::ledger_tcp>(std::move(tcp))} {
+      id = device_id++;
+      reset_buffer();
+      has_view_key = false;
+      tx_in_progress = false;
+      MDEBUG("Device " << id << " (tcp) created");
     }
 
     device_ledger::~device_ledger() {
@@ -497,7 +506,7 @@ namespace hw::ledger {
     unsigned int device_ledger::exchange(bool wait_on_input) {
       logCMD();
 
-      length_recv = hw_device.exchange(buffer_send, length_send, buffer_recv, BUFFER_SEND_SIZE, wait_on_input);
+      length_recv = hw_device->exchange(buffer_send, length_send, buffer_recv, BUFFER_RECV_SIZE, wait_on_input);
       CHECK_AND_ASSERT_THROW_MES(length_recv >= 2, "Communication error, less than two bytes received");
 
       length_recv -= 2;
@@ -537,12 +546,25 @@ namespace hw::ledger {
       return name;
     }
 
+    void device_ledger::set_address(std::string_view addr) {
+      if (addr.empty() || !hw_device)
+        return;
+      auto* tcp = dynamic_cast<io::ledger_tcp*>(hw_device.get());
+      if (!tcp)
+        return;
+      if (auto pos = addr.rfind(':'); pos != addr.npos) {
+        tcp->port = addr.substr(pos + 1);
+        addr = addr.substr(0, pos);
+      }
+      tcp->host = addr;
+    }
+
     bool device_ledger::init() {
 #ifdef DEBUG_HWDEVICE
       debug_device = &get_device("default");
 #endif
       release();
-      hw_device.init();
+      hw_device->init();
       MDEBUG("Device " << id <<" HIDUSB inited");
       return true;
     }
@@ -554,7 +576,12 @@ namespace hw::ledger {
 
     bool device_ledger::connect() {
       disconnect();
-      hw_device.connect(known_devices);
+      if (auto* hid_io = dynamic_cast<io::hid*>(hw_device.get()))
+          hid_io->connect(known_devices);
+      else if (auto* tcp = dynamic_cast<io::ledger_tcp*>(hw_device.get()))
+        tcp->connect();
+      else
+        throw std::logic_error{"Invalid ledger hardware configure"};
       reset();
 
       check_network_type();
@@ -571,17 +598,17 @@ namespace hw::ledger {
     }
 
     bool device_ledger::connected() const {
-      return hw_device.connected();
+      return hw_device->connected();
     }
 
     bool device_ledger::disconnect() {
-      hw_device.disconnect();
+      hw_device->disconnect();
       return true;
     }
 
     bool device_ledger::release() {
       disconnect();
-      hw_device.release();
+      hw_device->release();
       return true;
     }
 
@@ -1943,6 +1970,7 @@ namespace hw::ledger {
 
     void register_all(std::map<std::string, std::unique_ptr<device>>& registry) {
       registry.emplace("Ledger", std::make_unique<device_ledger>());
+      registry.emplace("LedgerTCP", std::make_unique<device_ledger>(io::ledger_tcp{}));
     }
 
   #else //WITH_DEVICE_LEDGER

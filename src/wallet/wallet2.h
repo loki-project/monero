@@ -1015,8 +1015,10 @@ private:
     void track_uses(bool value) { m_track_uses = value; }
     std::chrono::seconds inactivity_lock_timeout() const { return m_inactivity_lock_timeout; }
     void inactivity_lock_timeout(std::chrono::seconds seconds) { m_inactivity_lock_timeout = seconds; }
-    const std::string & device_name() const { return m_device_name; }
-    void device_name(const std::string & device_name) { m_device_name = device_name; }
+    const std::string& device_name() const { return m_device_name; }
+    const std::string& device_address() const { return m_device_address; }
+    void device_name(std::string device_name) { m_device_name = std::move(device_name); }
+    void device_address(std::string device_address) { m_device_address = std::move(device_address); }
     const std::string & device_derivation_path() const { return m_device_derivation_path; }
     void device_derivation_path(const std::string &device_derivation_path) { m_device_derivation_path = device_derivation_path; }
     const ExportFormat & export_format() const { return m_export_format; }
@@ -1649,6 +1651,7 @@ private:
     std::unordered_set<crypto::hash> m_scanned_pool_txs[2];
     size_t m_subaddress_lookahead_major, m_subaddress_lookahead_minor;
     std::string m_device_name;
+    std::string m_device_address;
     std::string m_device_derivation_path;
     uint64_t m_device_last_key_image_sync;
     bool m_offline;

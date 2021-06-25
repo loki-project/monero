@@ -140,7 +140,7 @@ namespace hw::io {
       return usb_device != nullptr;
     }
 
-    int hid::exchange(unsigned char *command, unsigned int cmd_len, unsigned char *response, unsigned int max_resp_len, bool user_input)  {
+    int hid::exchange(const unsigned char* command, unsigned int cmd_len, unsigned char* response, unsigned int max_resp_len, bool user_input)  {
       unsigned char buffer[400];
       unsigned char padding_buffer[MAX_BLOCK+1];
       unsigned int  result;

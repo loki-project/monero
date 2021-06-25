@@ -91,7 +91,7 @@ namespace hw {
       void connect(const std::vector<hid_conn_params>& conn);
       bool connect(unsigned int vid, unsigned  int pid, std::optional<int> interface_number, std::optional<unsigned short> usage_page);
       bool connected() const override;
-      int  exchange(unsigned char* command, unsigned int cmd_len, unsigned char* response, unsigned int max_resp_len, bool user_input) override;
+      int exchange(const unsigned char* command, unsigned int cmd_len, unsigned char* response, unsigned int max_resp_len, bool user_input) override;
       void disconnect() override;
       void release() override;
     };

@@ -585,6 +585,7 @@ build_external(zmq
   ${zmq_patch}
   CONFIGURE_COMMAND ./configure ${zmq_cross_host} --prefix=${DEPS_DESTDIR} --enable-static --disable-shared
     --disable-curve-keygen --enable-curve --disable-drafts --disable-libunwind --with-libsodium
+    --disable-libbsd --disable-perf
     --without-pgm --without-norm --without-vmci --without-docs --with-pic --disable-Werror
     "CC=${deps_cc}" "CXX=${deps_cxx}" "CFLAGS=-fstack-protector ${deps_CFLAGS}" "CXXFLAGS=-fstack-protector ${deps_CXXFLAGS}"
     ${cross_extra}

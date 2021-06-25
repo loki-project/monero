@@ -70,6 +70,7 @@ if (HIDAPI_FOUND)
   target_sources(device PRIVATE
     device_ledger.cpp
     io_hid.cpp
+    io_ledger_tcp.cpp
     )
   target_link_libraries(device PRIVATE hidapi_libusb)
 endif()

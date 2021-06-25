@@ -119,6 +119,10 @@ namespace hw {
         virtual bool set_name(std::string_view name) = 0;
         virtual std::string get_name() const = 0;
 
+        // Optional; can be used to take an address parameter if required (e.g. Ledger TCP uses this
+        // to specify the TCP address).
+        virtual void set_address(std::string_view address) {}
+
         virtual bool init() = 0;
         virtual bool release() = 0;
 
