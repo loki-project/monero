@@ -570,8 +570,8 @@ namespace hw::ledger {
     }
 
     static const std::vector<io::hid_conn_params> known_devices {
-        {0x2c97, 0x0001, 0, 0xffa0},
-        {0x2c97, 0x0004, 0, 0xffa0},
+        {0x2c97, 0x1000, 0, 0xffa0},
+        {0x2c97, 0x4000, 0, 0xffa0},
     };
 
     bool device_ledger::connect() {
