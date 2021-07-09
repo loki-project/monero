@@ -30,8 +30,9 @@
 #if defined(HAVE_HIDAPI) 
 
 #include <optional>
+#include <vector>
 #include <hidapi/hidapi.h>
-#include "device_io.hpp"
+#include "io_device.hpp"
 
 #pragma once
 
@@ -58,26 +59,22 @@ namespace hw {
     };
     
 
-    class device_io_hid: device_io {
+    class hid : public device {
       
+      unsigned short channel = 0x0001;
+      unsigned char tag = 0x01;
+      unsigned int packet_size = 64;
+      unsigned int timeout = 120000;
 
-    private:
-     
-
-      unsigned short channel;
-      unsigned char  tag;
-      unsigned int   packet_size; 
-      unsigned int   timeout;
-
-      unsigned int   usb_vid;
-      unsigned int   usb_pid;
-      hid_device     *usb_device;
+      unsigned int usb_vid = 0;
+      unsigned int usb_pid = 0;
+      hid_device* usb_device = nullptr;
 
       void io_hid_log(int read, unsigned char* buf, int buf_len);
       void io_hid_init();
       void io_hid_exit() ;
-      void io_hid_open(int vid, int pid,  int mode);
-      void io_hid_close (void);
+      void io_hid_open(int vid, int pid, int mode);
+      void io_hid_close();
 
       unsigned int wrapCommand(const unsigned char *command, size_t command_len, unsigned char *out, size_t out_len);
       unsigned int unwrapReponse(const unsigned char *data, size_t data_len, unsigned char *out, size_t out_len);
@@ -87,23 +84,16 @@ namespace hw {
     public:
       bool hid_verbose = false;
 
-      static const unsigned short DEFAULT_CHANNEL     = 0x0001;
-      static const unsigned char  DEFAULT_TAG         = 0x01;
-      static const unsigned int   DEFAULT_PACKET_SIZE = 64;
-      static const unsigned int   DEFAULT_TIMEOUT     = 120000;
+      hid(unsigned short channel, unsigned char tag, unsigned int packet_zize, unsigned int timeout);
+      hid() = default;
 
-      device_io_hid(unsigned short channel, unsigned char tag, unsigned int packet_zize, unsigned int timeout);
-      device_io_hid();
-      ~device_io_hid() {};
-
-      void init();  
-      void connect(void *params);
-      void connect(const std::vector<hid_conn_params> &conn);
-      hid_device  *connect(unsigned int vid, unsigned  int pid, std::optional<int> interface_number, std::optional<unsigned short> usage_page);
-      bool connected() const;
-      int  exchange(unsigned char *command, unsigned int cmd_len, unsigned char *response, unsigned int max_resp_len, bool user_input);
-      void disconnect();
-      void release();
+      void init() override;
+      void connect(const std::vector<hid_conn_params>& conn);
+      bool connect(unsigned int vid, unsigned  int pid, std::optional<int> interface_number, std::optional<unsigned short> usage_page);
+      bool connected() const override;
+      int exchange(const unsigned char* command, unsigned int cmd_len, unsigned char* response, unsigned int max_resp_len, bool user_input) override;
+      void disconnect() override;
+      void release() override;
     };
   };
 };

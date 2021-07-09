@@ -34,29 +34,19 @@
 #include <cstddef>
 #include <string>
 #include "device.hpp"
+#include "device/io_ledger_tcp.hpp"
 #include "log.hpp"
-#include "device_io_hid.hpp"
+#include "io_hid.hpp"
 
-namespace hw {
+namespace hw::ledger {
 
     using namespace std::literals;
-
-    namespace ledger {
 
     // Required coin value as returned by INS_GET_NETWORK during connection
     constexpr auto COIN_NETWORK = "OXEN"sv;
 
     /* Minimal supported version */
-    #define MINIMAL_APP_VERSION_MAJOR    0
-    #define MINIMAL_APP_VERSION_MINOR    9
-    #define MINIMAL_APP_VERSION_MICRO    0
-
-    #define VERSION(M,m,u)       ((M)<<16|(m)<<8|(u))
-    #define VERSION_MAJOR(v)     (((v)>>16)&0xFF)
-    #define VERSION_MINOR(v)     (((v)>>8)&0xFF)
-    #define VERSION_MICRO(v)     (((v)>>0)&0xFF)
-    
-    #define MINIMAL_APP_VERSION   VERSION(MINIMAL_APP_VERSION_MAJOR, MINIMAL_APP_VERSION_MINOR, MINIMAL_APP_VERSION_MICRO)
+    constexpr std::array<uint8_t, 3> MINIMUM_APP_VERSION{0,9,0};
 
     void register_all(std::map<std::string, std::unique_ptr<device>> &registry);
 
@@ -146,14 +136,14 @@ namespace hw {
     #define BUFFER_SEND_SIZE 262
     #define BUFFER_RECV_SIZE 262
 
-    class device_ledger : public hw::device {
+    class device_ledger : public device {
     private:
         // Locker for concurrent access
         mutable std::recursive_mutex device_locker;
         mutable std::mutex command_locker;
 
         //IO
-        hw::io::device_io_hid hw_device;
+        std::unique_ptr<io::device> hw_device;
         unsigned int length_send;
         unsigned char buffer_send[BUFFER_SEND_SIZE];
         unsigned int length_recv;
@@ -185,8 +175,6 @@ namespace hw {
         void send_finish(int& offset);
         unsigned int finish_and_exchange(int& offset, bool wait_on_input = false);
 
-        // hw running mode
-        device_mode mode;
         bool tx_in_progress;
 
         cryptonote::network_type nettype = cryptonote::network_type::UNDEFINED; // Set by the wallet before connecting
@@ -215,20 +203,31 @@ namespace hw {
         #endif
 
     public:
+        // Constructs a ledger device object that connects to a physical ledger device plugged into
+        // the system.
         device_ledger();
+
+        // Constructs a ledger device object that uses a TCP socket to communicate with the ledger
+        // device, typically for use with a Ledger emulator which doesn't emulated the USB layer.
+        explicit device_ledger(io::ledger_tcp&& tcp);
+
         ~device_ledger();
 
-        device_ledger(const device_ledger &device) = delete ;
-        device_ledger& operator=(const device_ledger &device) = delete;
+        device_ledger(const device_ledger&) = delete ;
+        device_ledger(device_ledger&&) = delete ;
+        device_ledger& operator=(const device_ledger&) = delete;
+        device_ledger&& operator=(device_ledger&&) = delete;
 
-        explicit operator bool() const override {return this->connected(); }
+        bool is_hardware_device() const override { return connected(); }
 
-        bool  reset();
+        bool reset();
 
         /* ======================================================================= */
         /*                              SETUP/TEARDOWN                             */
         /* ======================================================================= */
         bool set_name(std::string_view name) override;
+
+        void set_address(std::string_view addr) override;
 
         std::string get_name() const override;
         bool init() override;
@@ -237,10 +236,10 @@ namespace hw {
         bool disconnect() override;
         bool connected() const;
 
-        bool set_mode(device_mode mode) override;
+        bool set_mode(mode m) override;
 
-        device_type get_type() const override {return device_type::LEDGER;};
-        device_protocol_t device_protocol() const override { return PROTOCOL_PROXY; };
+        type get_type() const override { return type::LEDGER; };
+        protocol device_protocol() const override { return protocol::PROXY; };
 
         /* ======================================================================= */
         /*  LOCKER                                                                 */
@@ -330,7 +329,4 @@ namespace hw {
 
     };
     #endif  //WITH_DEVICE_LEDGER
-  }
-
 }
-
