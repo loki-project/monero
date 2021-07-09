@@ -835,7 +835,9 @@ private:
 
     std::unordered_map<std::string, ons_detail> get_ons_cache();
 
-    uint64_t get_blockchain_current_height() const { return m_light_wallet_blockchain_height ? m_light_wallet_blockchain_height : m_blockchain.size(); }
+    // Returns the current height up to which the wallet has synchronized the blockchain.  Thread
+    // safe (though the value may be behind if another thread is in the middle of adding blocks).
+    uint64_t get_blockchain_current_height() const { return m_cached_height; }
     void rescan_spent();
     void rescan_blockchain(bool hard, bool refresh = true, bool keep_key_images = false);
     bool is_transfer_unlocked(const transfer_details &td) const;
@@ -864,6 +866,7 @@ private:
       {
         a & m_blockchain;
       }
+      m_cached_height = m_blockchain.size();
       a & m_transfers;
       a & m_account_public_address;
       a & m_key_images;
@@ -1575,6 +1578,7 @@ private:
     fs::path m_keys_file;
     fs::path m_mms_file;
     hashchain m_blockchain;
+    std::atomic<uint64_t> m_cached_height; // Tracks m_blockchain.size(), but thread-safe.
     std::unordered_map<crypto::hash, unconfirmed_transfer_details> m_unconfirmed_txs;
     std::unordered_map<crypto::hash, confirmed_transfer_details> m_confirmed_txs;
     std::unordered_multimap<crypto::hash, pool_payment_details> m_unconfirmed_payments;

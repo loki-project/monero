@@ -87,6 +87,7 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
 
     auto filename = fs::u8path(filename_);
 
+    auto w = m_wallet.wallet();
     try {
       // Save tx to file
       if (!filename.empty()) {
@@ -95,7 +96,7 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
           LOG_ERROR(m_status.second);
           return false;
         }
-        bool r = m_wallet.m_wallet->save_tx(m_pending_tx, filename);
+        bool r = w->save_tx(m_pending_tx, filename);
         if (!r) {
           m_status = {Status_Error, tr("Failed to write transaction(s) to file")};
         } else {
@@ -104,14 +105,12 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
       }
       // Commit tx
       else {
-        auto multisigState = m_wallet.multisig();
+        auto multisigState = m_wallet.multisig(w);
         if (multisigState.isMultisig && m_signers.size() < multisigState.threshold) {
             throw std::runtime_error("Not enough signers to send multisig transaction");
         }
 
-        m_wallet.pauseRefresh();
-
-        const bool tx_cold_signed = m_wallet.m_wallet->get_account().get_device().has_tx_cold_sign();
+        const bool tx_cold_signed = w->get_account().get_device().has_tx_cold_sign();
         if (tx_cold_signed){
           std::unordered_set<size_t> selected_transfers;
           for(const tools::wallet2::pending_tx & ptx : m_pending_tx){
@@ -120,8 +119,8 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
             }
           }
 
-          m_wallet.m_wallet->cold_tx_aux_import(m_pending_tx, m_tx_device_aux);
-          bool r = m_wallet.m_wallet->import_key_images(m_key_images, 0, selected_transfers);
+          w->cold_tx_aux_import(m_pending_tx, m_tx_device_aux);
+          bool r = w->import_key_images(m_key_images, 0, selected_transfers);
           if (!r){
             throw std::runtime_error("Cold sign transaction submit failed - key image sync fail");
           }
@@ -129,7 +128,7 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
 
         while (!m_pending_tx.empty()) {
             auto & ptx = m_pending_tx.back();
-            m_wallet.m_wallet->commit_tx(ptx, blink);
+            w->commit_tx(ptx, blink);
             // if no exception, remove element from vector
             m_pending_tx.pop_back();
         } // TODO: extract method;
@@ -151,7 +150,6 @@ bool PendingTransactionImpl::commit(std::string_view filename_, bool overwrite, 
         LOG_ERROR(m_status.second);
     }
 
-    m_wallet.startRefresh();
     return good();
 }
 
@@ -159,6 +157,7 @@ EXPORT
 uint64_t PendingTransactionImpl::amount() const
 {
     uint64_t result = 0;
+    auto w = m_wallet.wallet();
     for (const auto &ptx : m_pending_tx)   {
         for (const auto &dest : ptx.dests) {
             result += dest.amount;
@@ -168,7 +167,7 @@ uint64_t PendingTransactionImpl::amount() const
         std::optional<uint8_t> hf_version = m_wallet.hardForkVersion();
         if (hf_version)
         {
-          if (service_nodes::tx_get_staking_components_and_amounts(static_cast<cryptonote::network_type>(m_wallet.nettype()), *hf_version, ptx.tx, height, &sc)
+          if (service_nodes::tx_get_staking_components_and_amounts(static_cast<cryptonote::network_type>(w->nettype()), *hf_version, ptx.tx, height, &sc)
           && sc.transferred > 0)
             result = sc.transferred;
         }
@@ -230,7 +229,7 @@ std::string PendingTransactionImpl::multisigSignData() {
         tools::wallet2::multisig_tx_set txSet;
         txSet.m_ptx = m_pending_tx;
         txSet.m_signers = m_signers;
-        auto cipher = m_wallet.m_wallet->save_multisig_tx(txSet);
+        auto cipher = m_wallet.wallet()->save_multisig_tx(txSet);
 
         return oxenmq::to_hex(cipher);
     } catch (const std::exception& e) {
@@ -249,7 +248,7 @@ void PendingTransactionImpl::signMultisigTx() {
         txSet.m_ptx = m_pending_tx;
         txSet.m_signers = m_signers;
 
-        if (!m_wallet.m_wallet->sign_multisig_tx(txSet, ignore)) {
+        if (!m_wallet.wallet()->sign_multisig_tx(txSet, ignore)) {
             throw std::runtime_error("couldn't sign multisig transaction");
         }
 

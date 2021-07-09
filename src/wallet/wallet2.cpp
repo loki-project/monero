@@ -2645,6 +2645,7 @@ void wallet2::process_new_blockchain_entry(const cryptonote::block& b, const cry
       LOG_PRINT_L2( "Skipped block by timestamp, height: " << height << ", block time " << b.timestamp << ", account time " << m_account.get_createtime());
   }
   m_blockchain.push_back(bl_id);
+  m_cached_height++;
 
   if (0 != m_callback)
     m_callback->on_new_block(height, b);
@@ -3311,6 +3312,7 @@ void wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
       m_blockchain.push_back(crypto::null_hash); // maybe a bit suboptimal, but deque won't do huge reallocs like vector
     m_blockchain.push_back(checkpoint_hash);
     m_blockchain.trim(checkpoint_height);
+    m_cached_height = m_blockchain.size();
     short_chain_history.clear();
     get_short_chain_history(short_chain_history);
   }
@@ -3343,6 +3345,7 @@ void wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
         if (!(current_index % 1024))
           LOG_PRINT_L2( "Skipped block by height: " << current_index);
         m_blockchain.push_back(bl_id);
+        m_cached_height++;
 
         if (0 != m_callback)
         { // FIXME: this isn't right, but simplewallet just logs that we got a block.
@@ -3550,6 +3553,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
           generate_genesis(b);
           m_blockchain.clear();
           m_blockchain.push_back(get_block_hash(b));
+          m_cached_height++;
           short_chain_history.clear();
           get_short_chain_history(short_chain_history);
           fast_refresh(stop_height, blocks_start_height, short_chain_history, true);
@@ -3557,6 +3561,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
           THROW_WALLET_EXCEPTION_IF(m_blockchain.offset() != 0, error::wallet_internal_error, "Unexpected hashchain offset");
           for (const auto &h: tip)
             m_blockchain.push_back(h);
+          m_cached_height = m_blockchain.size();
           short_chain_history.clear();
           get_short_chain_history(short_chain_history);
           start_height = stop_height;
@@ -3794,6 +3799,7 @@ void wallet2::detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, ui
 
   size_t blocks_detached = m_blockchain.size() - height;
   m_blockchain.crop(height);
+  m_cached_height = m_blockchain.size();
 
   for (auto it = m_payments.begin(); it != m_payments.end(); )
   {
@@ -3825,6 +3831,7 @@ bool wallet2::deinit()
 bool wallet2::clear()
 {
   m_blockchain.clear();
+  m_cached_height = m_blockchain.size();
   m_transfers.clear();
   m_key_images.clear();
   m_pub_keys.clear();
@@ -3861,6 +3868,7 @@ void wallet2::clear_soft(bool keep_key_images)
   cryptonote::block b;
   generate_genesis(b);
   m_blockchain.push_back(get_block_hash(b));
+  m_cached_height = m_blockchain.size();
   m_last_block_reward = cryptonote::get_outs_money_amount(b.miner_tx);
 }
 
@@ -4607,6 +4615,7 @@ void wallet2::setup_new_blockchain()
   cryptonote::block b;
   generate_genesis(b);
   m_blockchain.push_back(get_block_hash(b));
+  m_cached_height = m_blockchain.size();
   m_last_block_reward = cryptonote::get_outs_money_amount(b.miner_tx);
   add_subaddress_account(tr("Primary account"));
 }
@@ -5792,6 +5801,7 @@ void wallet2::load(const fs::path& wallet_, const epee::wipeable_string& passwor
   {
     m_blockchain.push_back(genesis_hash);
     m_last_block_reward = cryptonote::get_outs_money_amount(genesis.miner_tx);
+    m_cached_height = m_blockchain.size();
   }
   else
   {
@@ -5856,6 +5866,7 @@ void wallet2::trim_hashchain()
     MDEBUG("trimming to " << height << ", offset " << m_blockchain.offset());
     m_blockchain.trim(height);
   }
+  m_cached_height = m_blockchain.size();
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::check_genesis(const crypto::hash& genesis_hash) const {
@@ -13774,36 +13785,36 @@ void wallet2::import_payments_out(const std::list<std::pair<crypto::hash,wallet2
   }
 }
 
-std::tuple<size_t,crypto::hash,std::vector<crypto::hash>> wallet2::export_blockchain() const
+std::tuple<size_t, crypto::hash, std::vector<crypto::hash>> wallet2::export_blockchain() const
 {
   std::tuple<size_t, crypto::hash, std::vector<crypto::hash>> bc;
-  std::get<0>(bc) = m_blockchain.offset();
-  std::get<1>(bc) = m_blockchain.empty() ? crypto::null_hash: m_blockchain.genesis();
+  auto& [offset, genesis_hash, hashes] = bc;
+  offset = m_blockchain.offset();
+  genesis_hash = m_blockchain.empty() ? crypto::null_hash: m_blockchain.genesis();
   for (size_t n = m_blockchain.offset(); n < m_blockchain.size(); ++n)
-  {
-    std::get<2>(bc).push_back(m_blockchain[n]);
-  }
+    hashes.push_back(m_blockchain[n]);
   return bc;
 }
 
 void wallet2::import_blockchain(const std::tuple<size_t, crypto::hash, std::vector<crypto::hash>> &bc)
 {
+  const auto& [offset, genesis_h, hashes] = bc;
   m_blockchain.clear();
-  if (std::get<0>(bc))
+  if (offset)
   {
-    for (size_t n = std::get<0>(bc); n > 0; --n)
-      m_blockchain.push_back(std::get<1>(bc));
-    m_blockchain.trim(std::get<0>(bc));
+    for (size_t n = offset; n > 0; --n)
+      m_blockchain.push_back(genesis_h);
+    m_blockchain.trim(offset);
   }
-  for (auto const &b : std::get<2>(bc))
-  {
+  for (auto const &b : hashes)
     m_blockchain.push_back(b);
-  }
+
   cryptonote::block genesis;
   generate_genesis(genesis);
   crypto::hash genesis_hash = get_block_hash(genesis);
   check_genesis(genesis_hash);
   m_last_block_reward = cryptonote::get_outs_money_amount(genesis.miner_tx);
+  m_cached_height = m_blockchain.size();
 }
 //----------------------------------------------------------------------------------------------------
 std::pair<size_t, std::vector<tools::wallet2::transfer_details>> wallet2::export_outputs(bool all) const

@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -614,8 +615,8 @@ struct Wallet
     virtual bool watchOnly() const = 0;
 
     /**
-     * @brief blockChainHeight - returns current blockchain height
-     * @return
+     * @brief blockChainHeight - returns current blockchain height.  This is thread-safe and will
+     * not block if called from different threads.
      */
     virtual uint64_t blockChainHeight() const = 0;
 
@@ -632,7 +633,7 @@ struct Wallet
     **/ 
     virtual uint64_t estimateBlockChainHeight() const = 0;
     /**
-     * @brief daemonBlockChainHeight - returns daemon blockchain height
+     * @brief daemonBlockChainHeight - returns daemon blockchain height; thread-safe.
      * @return 0 - in case error communicating with the daemon.
      *             status() will return Status_Error and a return verbose error description
      */
@@ -689,6 +690,21 @@ struct Wallet
      * @brief refreshAsync - refreshes wallet asynchronously.
      */
     virtual void refreshAsync() = 0;
+
+    /**
+     * @brief refreshing - returns true if a refresh is currently underway; this is done *without*
+     * requiring a lock, unlike most other wallet-interacting functions.
+     *
+     * @param max_wait - the maximum time to try to obtain the refresh thread lock.  If this time
+     * expires without acquiring a lock, we return true, otherwise we return false.  Defaults to
+     * 50ms; can be set to 0ms to always return immediately.
+     *
+     * @return - true if the refresh thread is currently active, false otherwise.  If true, very few
+     * other methods here will work (i.e. they will block until the refresh finishes).  The most
+     * notably non-blocking, thread-safe methods that can be used when this returns true are
+     * blockChainHeight and daemonBlockChainHeight.
+     */
+    virtual bool isRefreshing(std::chrono::milliseconds max_wait = std::chrono::milliseconds{50}) = 0;
 
     /**
      * @brief rescanBlockchain - rescans the wallet, updating transactions from daemon

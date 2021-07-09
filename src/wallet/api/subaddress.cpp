@@ -46,7 +46,7 @@ SubaddressImpl::SubaddressImpl(WalletImpl *wallet)
 EXPORT
 void SubaddressImpl::addRow(uint32_t accountIndex, const std::string &label)
 {
-  m_wallet->m_wallet->add_subaddress(accountIndex, label);
+  m_wallet->wallet()->add_subaddress(accountIndex, label);
   refresh(accountIndex);
 }
 
@@ -55,7 +55,7 @@ void SubaddressImpl::setLabel(uint32_t accountIndex, uint32_t addressIndex, cons
 {
   try
   {
-    m_wallet->m_wallet->set_subaddress_label({accountIndex, addressIndex}, label);
+    m_wallet->wallet()->set_subaddress_label({accountIndex, addressIndex}, label);
     refresh(accountIndex);
   }
   catch (const std::exception& e)
@@ -70,9 +70,10 @@ void SubaddressImpl::refresh(uint32_t accountIndex)
   LOG_PRINT_L2("Refreshing subaddress");
   
   clearRows();
-  for (size_t i = 0; i < m_wallet->m_wallet->get_num_subaddresses(accountIndex); ++i)
+  auto w = m_wallet->wallet();
+  for (size_t i = 0; i < w->get_num_subaddresses(accountIndex); ++i)
   {
-    m_rows.push_back(new SubaddressRow(i, m_wallet->m_wallet->get_subaddress_as_str({accountIndex, (uint32_t)i}), m_wallet->m_wallet->get_subaddress_label({accountIndex, (uint32_t)i})));
+    m_rows.push_back(new SubaddressRow(i, w->get_subaddress_as_str({accountIndex, (uint32_t)i}), w->get_subaddress_label({accountIndex, (uint32_t)i})));
   }
 }
 
