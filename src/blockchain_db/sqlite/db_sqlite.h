@@ -30,7 +30,6 @@
 #include <string>
 #include <filesystem>
 
-#include "orm.h"
 #include "types.h"
 
 #include "epee/misc_log_ex.h"
@@ -38,7 +37,7 @@
 #include "../../cryptonote_core/cryptonote_tx_utils.h"
 #include "common/fs.h"
 
-#include <sqlite_orm/sqlite_orm.h>
+#include <SQLiteCpp/SQLiteCpp.h>
 
 namespace cryptonote
 {
@@ -68,7 +67,7 @@ public:
 
   uint64_t height;
 
-  std::unique_ptr<sqliteDBStorage> m_storage;
+  std::unique_ptr<SQLite::Database> m_storage;
   std::string filename;
 
 private:

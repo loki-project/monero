@@ -27,7 +27,7 @@
 
 #include "db_sqlite.h"
 
-#include <sqlite_orm/sqlite_orm.h>
+#include <SQLiteCpp/SQLiteCpp.h>
 
 #include <string>
 #include <iostream>
@@ -63,7 +63,7 @@ void BlockchainSQLite::load_database(std::optional<fs::path> file)
     MINFO("Loading memory-backed sqliteDB");
   }
 
-  m_storage = std::make_unique<sqliteDBStorage>(initStorage(fileString));
+  m_storage = std::make_unique<SQLite::Database>(db(fileString));
   m_storage->sync_schema(true);
 
 }
