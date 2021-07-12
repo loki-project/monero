@@ -33,6 +33,8 @@
 # ...except for FreeBSD, because FreeBSD is a special case that doesn't play well with
 # others.
 
+include(FetchContent)
+
 set(DEFAULT_WITH_MINIUPNPC ON)
 if(ANDROID OR IOS)
   set(DEFAULT_WITH_MINIUPNPC OFF)
@@ -143,3 +145,70 @@ target_link_libraries(cpr PUBLIC CURL::libcurl)
 target_include_directories(cpr PUBLIC cpr/include)
 target_compile_definitions(cpr PUBLIC CPR_CURL_NOSIGNAL)
 add_library(cpr::cpr ALIAS cpr)
+
+
+
+#if(NOT BUILD_STATIC_DEPS) # Under BUILD_STATIC_DEPS the SQLite::SQLite3 target is already set up
+  # We require 3.35.x for some queries we use (such as "RETURNING"), and 3.35.5 for bug fixes, but
+  # that release is very new as of this writing so we build a static release if the system one is
+  # too old.
+#pkg_check_modules(SQLite3 sqlite3>=3.35.5 IMPORTED_TARGET)
+
+#if(SQLite3_FOUND)
+  #add_library(SQLite::SQLite3 ALIAS PkgConfig::SQLite3)
+#else()
+  #include(ExternalProject)
+  #unset(SQLITE3_VERSION CACHE)
+  #include(sqlite3_source)
+
+  #set(sqlite_urls)
+  #foreach(mirror ${SQLITE3_MIRROR})
+    #list(APPEND sqlite_urls "${mirror}/${SQLITE3_SOURCE}")
+  #endforeach()
+
+  #set(deps_cc "${CMAKE_C_COMPILER}")
+  #if(CMAKE_C_COMPILER_LAUNCHER)
+    #set(deps_cc "${CMAKE_C_COMPILER_LAUNCHER} ${deps_cc}")
+  #endif()
+  #set(deps_CFLAGS "-O2")
+  #if(USE_LTO AND NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    ## For unknown reasons, clang has trouble linking sqlite3 if we build it with lto
+    #set(deps_CFLAGS "${deps_CFLAGS} -flto")
+  #endif()
+
+  #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/include ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/lib)
+  #ExternalProject_Add(sqlite3_external
+    #BUILD_IN_SOURCE ON
+    #PREFIX ${CMAKE_CURRENT_BINARY_DIR}/sqlite3
+    #URL ${sqlite_urls}
+    #URL_HASH ${SQLITE3_HASH}
+    #DOWNLOAD_NO_PROGRESS ON
+    #CONFIGURE_COMMAND ./configure --disable-shared --prefix=${CMAKE_CURRENT_BINARY_DIR}/sqlite3 --with-pic "CC=${deps_cc}" "CFLAGS=${deps_CFLAGS}"
+    #BUILD_COMMAND true
+    #INSTALL_COMMAND make install-includeHEADERS install-libLTLIBRARIES
+    #BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/lib/libsqlite3.a ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/include/sqlite3.h
+    #)
+  #add_library(SQLite::SQLite3 STATIC IMPORTED GLOBAL)
+  #add_dependencies(SQLite::SQLite3 sqlite3_external)
+  #set_target_properties(SQLite::SQLite3 PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/lib/libsqlite3.a)
+  #target_include_directories(SQLite::SQLite3 INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/sqlite3/include)
+#endif()
+
+## Hack around SQLiteCpp's attempts to locate sqlite3 because we *don't* want to link against the
+## system one, but don't download and build the embedded one until build time.  Thankfully it
+## actually links against the SQLite::SQLite3 cmake target if it already exists, so all we have to do
+## is set that up and circumvent some of the non-target bits of its FindSQLite3.cmake.
+#set(SQLite3_FOUND TRUE CACHE BOOL "" FORCE)
+#file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/ignored")
+#file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ignored/sqlite3.h" "#define SQLITE_VERSION \"${SQLite3_VERSION}\"")
+#set(SQLite3_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/ignored" CACHE STRING "" FORCE)
+#set(SQLite3_LIBRARY "ignored" CACHE STRING "" FORCE)
+#set(SQLITECPP_INTERNAL_SQLITE OFF CACHE BOOL "don't build SQLiteCpp's internal sqlite3" FORCE)
+#set(SQLITE_ENABLE_COLUMN_METADATA OFF CACHE BOOL "" FORCE)
+#set(SQLITECPP_RUN_CPPLINT OFF CACHE BOOL "" FORCE)
+#set(SQLITECPP_RUN_CPPCHECK OFF CACHE BOOL "" FORCE)
+#set(SQLITECPP_RUN_DOXYGEN OFF CACHE BOOL "" FORCE)
+#set(SQLITECPP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+#set(SQLITECPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(SQLiteCpp)
